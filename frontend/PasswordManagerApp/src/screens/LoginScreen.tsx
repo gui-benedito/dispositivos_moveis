@@ -10,7 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { authService } from '../services/api';
+import { authService } from '../services/apiSimple';
+import { testConnection } from '../services/testConnection';
 import { LoginRequest, ApiError } from '../types/auth';
 
 interface LoginScreenProps {
@@ -39,6 +40,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToR
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleTestConnection = async () => {
+    const result = await testConnection();
+    Alert.alert('Teste de Conexão', result.message);
   };
 
   const handleLogin = async () => {
@@ -126,6 +132,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToR
           >
             <Text style={styles.linkText}>Não tem conta? Cadastre-se</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.testButton}
+            onPress={handleTestConnection}
+            disabled={loading}
+          >
+            <Text style={styles.testButtonText}>🔧 Testar Conexão</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -206,6 +220,18 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#3498db',
     fontSize: 14,
+  },
+  testButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#f39c12',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  testButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

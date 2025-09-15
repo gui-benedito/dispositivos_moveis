@@ -25,14 +25,30 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS configuration
+// CORS configuration - mais permissivo para desenvolvimento
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] // Substitua pelo seu domínio em produção
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8081'], // React Native dev server
+  origin: function (origin, callback) {
+    // Permite requisições sem origin (ex: mobile apps, Postman)
+    if (!origin) return callback(null, true);
+    
+    // Em desenvolvimento, permite qualquer origem local
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    // Em produção, verificar domínios específicos
+    const allowedOrigins = ['https://yourdomain.com'];
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Não permitido pelo CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Length', 'X-Foo'],
+  optionsSuccessStatus: 200 // Para suportar navegadores legados
 }));
 
 // Rate limiting geral
@@ -44,7 +60,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware de logging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - IP: ${req.ip}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - IP: ${req.ip} - Origin: ${req.headers.origin || 'N/A'}`);
   next();
 });
 
@@ -111,11 +127,13 @@ const startServer = async () => {
     // Sincronizar banco de dados
     await syncDatabase();
     
-    // Iniciar servidor
-    app.listen(PORT, () => {
+    // Iniciar servidor em todas as interfaces (0.0.0.0)
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
       console.log(`📱 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 API disponível em: http://localhost:${PORT}/api`);
+      console.log(`🔗 API disponível em:`);
+      console.log(`   - http://localhost:${PORT}/api`);
+      console.log(`   - http://127.0.0.1:${PORT}/api`);
       console.log(`📚 Documentação Swagger: http://localhost:${PORT}/api-docs`);
       console.log(`❤️  Health check: http://localhost:${PORT}/api/health`);
     });

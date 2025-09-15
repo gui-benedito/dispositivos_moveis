@@ -11,7 +11,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { authService } from '../services/api';
+import { authService } from '../services/apiSimple';
 import { RegisterRequest, ApiError } from '../types/auth';
 
 interface RegisterScreenProps {

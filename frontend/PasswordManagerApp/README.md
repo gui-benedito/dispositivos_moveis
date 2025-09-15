@@ -130,3 +130,4 @@ O app está configurado para se conectar com o backend em:
 - Implementar gerador de senhas (RF04)
 - Implementar bloqueio automático (RF05)
 - Implementar categorias (RF06)
+
