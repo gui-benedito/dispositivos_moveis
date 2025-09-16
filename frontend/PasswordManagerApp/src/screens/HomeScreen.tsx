@@ -9,6 +9,7 @@ import {
 
 interface HomeScreenProps {
   onLogout: () => void;
+  onNavigateToSettings: () => void;
   user: {
     firstName: string;
     lastName: string;
@@ -16,7 +17,7 @@ interface HomeScreenProps {
   };
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, user }) => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings, user }) => {
   const handleLogout = () => {
     Alert.alert(
       'Logout',
@@ -50,7 +51,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, user }) => {
           <Text style={styles.feature}>• Categorias personalizadas</Text>
           <Text style={styles.feature}>• Busca rápida</Text>
           <Text style={styles.feature}>• Bloqueio automático</Text>
+          <Text style={styles.feature}>• Autenticação biométrica</Text>
         </View>
+
+        <TouchableOpacity style={styles.settingsButton} onPress={onNavigateToSettings}>
+          <Text style={styles.settingsButtonText}>⚙️ Configurações</Text>
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -118,6 +124,18 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 8,
     lineHeight: 22,
+  },
+  settingsButton: {
+    backgroundColor: '#3498db',
+    marginTop: 20,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  settingsButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   logoutButton: {
     backgroundColor: '#e74c3c',

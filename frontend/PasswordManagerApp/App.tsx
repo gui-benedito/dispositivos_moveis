@@ -4,12 +4,14 @@ import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import HomeScreen from './src/screens/HomeScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import { AuthTokens, User } from './src/types/auth';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings'>('home');
 
   useEffect(() => {
     checkAuthStatus();
@@ -59,9 +61,18 @@ export default function App() {
       
       setUser(null);
       setIsAuthenticated(false);
+      setCurrentScreen('home');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
+  };
+
+  const handleNavigateToSettings = () => {
+    setCurrentScreen('settings');
+  };
+
+  const handleNavigateToHome = () => {
+    setCurrentScreen('home');
   };
 
   if (isLoading) {
@@ -72,7 +83,19 @@ export default function App() {
     <NavigationContainer>
       <StatusBar style="auto" />
       {isAuthenticated && user ? (
-        <HomeScreen user={user} onLogout={handleLogout} />
+        currentScreen === 'home' ? (
+          <HomeScreen 
+            user={user} 
+            onLogout={handleLogout} 
+            onNavigateToSettings={handleNavigateToSettings}
+          />
+        ) : (
+          <SettingsScreen 
+            user={user} 
+            onLogout={handleLogout}
+            onNavigateToHome={handleNavigateToHome}
+          />
+        )
       ) : (
         <AuthNavigator onAuthSuccess={handleAuthSuccess} />
       )}

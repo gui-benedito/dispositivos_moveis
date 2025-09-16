@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { authService } from '../services/apiSimple';
 import { testConnection } from '../services/testConnection';
+import { BiometricService } from '../services/biometricService';
 import { LoginRequest, ApiError } from '../types/auth';
+import { BiometricType } from '../types/biometric';
 
 interface LoginScreenProps {
   onLoginSuccess: (tokens: any, userData: any) => void;
@@ -24,6 +26,27 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToR
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+
+  // Verificar suporte biométrico ao carregar a tela
+  React.useEffect(() => {
+    checkBiometricSupport();
+  }, []);
+
+  const checkBiometricSupport = async () => {
+    try {
+      const supported = await BiometricService.isBiometricSupported();
+      setBiometricSupported(supported);
+      
+      if (supported) {
+        const hasSession = await BiometricService.hasValidBiometricSession();
+        setBiometricAvailable(hasSession);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar biometria:', error);
+    }
+  };
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -45,6 +68,34 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToR
   const handleTestConnection = async () => {
     const result = await testConnection();
     Alert.alert('Teste de Conexão', result.message);
+  };
+
+  const handleBiometricLogin = async () => {
+    if (!biometricSupported || !biometricAvailable) {
+      Alert.alert('Biometria Indisponível', 'Autenticação biométrica não está disponível ou configurada.');
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      // Obter tipos disponíveis e usar o primeiro
+      const availableTypes = await BiometricService.getAvailableBiometricTypes();
+      const biometricType = availableTypes[0] as BiometricType;
+
+      const result = await BiometricService.authenticateBiometric(biometricType);
+      
+      if (result.success && result.data?.tokens && result.data?.user) {
+        Alert.alert('Sucesso', 'Login biométrico realizado com sucesso!');
+        onLoginSuccess(result.data.tokens, result.data.user);
+      }
+    } catch (error: any) {
+      const apiError = error as ApiError;
+      Alert.alert('Erro', apiError.message || 'Erro na autenticação biométrica');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogin = async () => {
@@ -124,6 +175,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToR
               <Text style={styles.buttonText}>Entrar</Text>
             )}
           </TouchableOpacity>
+
+          {biometricSupported && biometricAvailable && (
+            <TouchableOpacity
+              style={[styles.biometricButton, loading && styles.buttonDisabled]}
+              onPress={handleBiometricLogin}
+              disabled={loading}
+            >
+              <Text style={styles.biometricButtonText}>🔐 Entrar com Biometria</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={styles.linkButton}
@@ -209,6 +270,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#bdc3c7',
   },
   buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  biometricButton: {
+    backgroundColor: '#9b59b6',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  biometricButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',

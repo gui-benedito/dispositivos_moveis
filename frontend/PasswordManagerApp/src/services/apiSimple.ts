@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { AuthResponse, LoginRequest, RegisterRequest, ApiError } from '../types/auth';
 
 // URL que funcionou no teste
-const WORKING_URL = 'http://localhost:3000/api';
+const WORKING_URL = 'http://192.168.0.68:3000/api';
 
 console.log('🔗 Usando URL funcionando:', WORKING_URL);
 

@@ -3,9 +3,11 @@ const router = express.Router();
 
 // Importar rotas
 const authRoutes = require('./auth');
+const biometricRoutes = require('./biometric');
 
 // Configurar rotas
 router.use('/auth', authRoutes);
+router.use('/biometric', biometricRoutes);
 
 /**
  * @swagger
@@ -84,6 +86,7 @@ router.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
+      biometric: '/api/biometric',
       health: '/api/health'
     }
   });

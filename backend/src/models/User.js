@@ -81,6 +81,14 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  biometricType: {
+    type: DataTypes.ENUM('fingerprint'),
+    allowNull: true
+  },
+  biometricLastUsed: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   twoFactorEnabled: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
