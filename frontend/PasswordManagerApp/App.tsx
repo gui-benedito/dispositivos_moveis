@@ -5,13 +5,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import HomeScreen from './src/screens/HomeScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import CredentialsScreen from './src/screens/CredentialsScreen';
 import { AuthTokens, User } from './src/types/auth';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings' | 'credentials'>('home');
 
   useEffect(() => {
     checkAuthStatus();
@@ -75,6 +76,10 @@ export default function App() {
     setCurrentScreen('home');
   };
 
+  const handleNavigateToCredentials = () => {
+    setCurrentScreen('credentials');
+  };
+
   if (isLoading) {
     return null; // Ou uma tela de loading
   }
@@ -84,16 +89,21 @@ export default function App() {
       <StatusBar style="auto" />
       {isAuthenticated && user ? (
         currentScreen === 'home' ? (
-          <HomeScreen 
-            user={user} 
-            onLogout={handleLogout} 
+          <HomeScreen
+            user={user}
+            onLogout={handleLogout}
             onNavigateToSettings={handleNavigateToSettings}
+            onNavigateToCredentials={handleNavigateToCredentials}
           />
-        ) : (
+        ) : currentScreen === 'settings' ? (
           <SettingsScreen 
             user={user} 
             onLogout={handleLogout}
             onNavigateToHome={handleNavigateToHome}
+          />
+        ) : (
+          <CredentialsScreen 
+            onNavigateBack={handleNavigateToHome}
           />
         )
       ) : (
