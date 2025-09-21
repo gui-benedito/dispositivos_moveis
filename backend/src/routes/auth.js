@@ -53,5 +53,11 @@ router.get('/check-email',
   AuthController.checkEmailAvailability
 );
 
+// Rota para verificar senha (para desbloqueio)
+router.post('/verify-password', 
+  authenticateToken,
+  AuthController.verifyPassword
+);
+
 module.exports = router;
 

@@ -551,6 +551,95 @@ class AuthController {
       });
     }
   }
+
+  /**
+   * Verificar senha do usuário (para desbloqueio)
+   * @swagger
+   * /api/auth/verify-password:
+   *   post:
+   *     summary: Verificar senha do usuário
+   *     tags: [Auth]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - password
+   *             properties:
+   *               password:
+   *                 type: string
+   *                 description: Senha do usuário
+   *     responses:
+   *       200:
+   *         description: Senha verificada com sucesso
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                 message:
+   *                   type: string
+   *       401:
+   *         description: Senha incorreta
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                 message:
+   *                   type: string
+   *                 code:
+   *                   type: string
+   *       500:
+   *         description: Erro interno do servidor
+   */
+  static async verifyPassword(req, res) {
+    try {
+      const { password } = req.body;
+      const userId = req.user.id;
+
+      // Buscar usuário
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuário não encontrado',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+
+      // Verificar senha
+      const isValidPassword = await user.validatePassword(password);
+      if (!isValidPassword) {
+        return res.status(401).json({
+          success: false,
+          message: 'Senha incorreta',
+          code: 'INVALID_PASSWORD'
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: 'Senha verificada com sucesso'
+      });
+
+    } catch (error) {
+      console.error('Erro ao verificar senha:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor',
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  }
 }
 
 module.exports = AuthController;

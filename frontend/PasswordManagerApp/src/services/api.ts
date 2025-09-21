@@ -1,4 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthResponse, LoginRequest, RegisterRequest, ApiError } from '../types/auth';
 import { connectionManager } from './connectionManager';
 
@@ -51,6 +52,20 @@ api.interceptors.request.use(
     } else {
       config.baseURL = API_BASE_URL;
       console.log('⚠️ Usando URL padrão:', API_BASE_URL);
+    }
+    
+    // Adicionar token de autenticação se disponível
+    try {
+      const tokens = await AsyncStorage.getItem('authTokens');
+      if (tokens) {
+        const parsedTokens = JSON.parse(tokens);
+        if (parsedTokens.accessToken) {
+          config.headers.Authorization = `Bearer ${parsedTokens.accessToken}`;
+          console.log('🔐 Token adicionado à requisição');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro ao obter token:', error);
     }
     
     console.log('📤 Requisição:', config.method?.toUpperCase(), config.url);

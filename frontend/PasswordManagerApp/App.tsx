@@ -6,6 +6,8 @@ import AuthNavigator from './src/navigation/AuthNavigator';
 import HomeScreen from './src/screens/HomeScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import CredentialsScreen from './src/screens/CredentialsScreen';
+import { AppLockProvider } from './src/components/AppLockProvider';
+import { SettingsProvider } from './src/contexts/SettingsContext';
 import { AuthTokens, User } from './src/types/auth';
 
 export default function App() {
@@ -85,30 +87,34 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <StatusBar style="auto" />
-      {isAuthenticated && user ? (
-        currentScreen === 'home' ? (
-          <HomeScreen
-            user={user}
-            onLogout={handleLogout}
-            onNavigateToSettings={handleNavigateToSettings}
-            onNavigateToCredentials={handleNavigateToCredentials}
-          />
-        ) : currentScreen === 'settings' ? (
-          <SettingsScreen 
-            user={user} 
-            onLogout={handleLogout}
-            onNavigateToHome={handleNavigateToHome}
-          />
+    <SettingsProvider>
+      <NavigationContainer>
+        <StatusBar style="auto" />
+        {isAuthenticated && user ? (
+          <AppLockProvider isAuthenticated={isAuthenticated}>
+            {currentScreen === 'home' ? (
+              <HomeScreen
+                user={user}
+                onLogout={handleLogout}
+                onNavigateToSettings={handleNavigateToSettings}
+                onNavigateToCredentials={handleNavigateToCredentials}
+              />
+            ) : currentScreen === 'settings' ? (
+              <SettingsScreen 
+                user={user} 
+                onLogout={handleLogout}
+                onNavigateToHome={handleNavigateToHome}
+              />
+            ) : (
+              <CredentialsScreen 
+                onNavigateBack={handleNavigateToHome}
+              />
+            )}
+          </AppLockProvider>
         ) : (
-          <CredentialsScreen 
-            onNavigateBack={handleNavigateToHome}
-          />
-        )
-      ) : (
-        <AuthNavigator onAuthSuccess={handleAuthSuccess} />
-      )}
-    </NavigationContainer>
+          <AuthNavigator onAuthSuccess={handleAuthSuccess} />
+        )}
+      </NavigationContainer>
+    </SettingsProvider>
   );
 }

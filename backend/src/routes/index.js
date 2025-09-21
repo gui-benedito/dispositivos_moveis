@@ -5,11 +5,13 @@ const router = express.Router();
 const authRoutes = require('./auth');
 const biometricRoutes = require('./biometric');
 const credentialRoutes = require('./credentials');
+const settingsRoutes = require('./settings');
 
 // Configurar rotas
 router.use('/auth', authRoutes);
 router.use('/biometric', biometricRoutes);
 router.use('/credentials', credentialRoutes);
+router.use('/settings', settingsRoutes);
 
 /**
  * @swagger
@@ -90,6 +92,7 @@ router.get('/', (req, res) => {
       auth: '/api/auth',
       biometric: '/api/biometric',
       credentials: '/api/credentials',
+      settings: '/api/settings',
       health: '/api/health'
     }
   });

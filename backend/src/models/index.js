@@ -2,6 +2,7 @@ const { sequelize } = require('../config/database');
 const User = require('./User');
 const BiometricSession = require('./BiometricSession');
 const Credential = require('./Credential');
+const UserSettings = require('./UserSettings');
 
 // Associações entre modelos
 User.hasMany(BiometricSession, { foreignKey: 'userId', as: 'biometricSessions' });
@@ -9,6 +10,9 @@ BiometricSession.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(Credential, { foreignKey: 'userId', as: 'credentials' });
 Credential.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasOne(UserSettings, { foreignKey: 'userId', as: 'settings' });
+UserSettings.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Sincronizar modelos com o banco de dados
 const syncDatabase = async () => {
@@ -34,5 +38,6 @@ module.exports = {
   User,
   BiometricSession,
   Credential,
+  UserSettings,
   syncDatabase
 };

@@ -3,41 +3,24 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
-  Alert,
   Switch,
+  Alert,
+  ScrollView,
   Modal,
-  FlatList,
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthenticatedSettings } from '../hooks/useAuthenticatedSettings';
 import { LOCK_TIMEOUT_OPTIONS } from '../types/settings';
 
-interface SettingsScreenProps {
-  onLogout: () => void;
-  onNavigateToHome: () => void;
-  user: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
+interface SecuritySettingsProps {
+  onNavigateBack?: () => void;
 }
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToHome, user }) => {
-  const { settings, updateSettings, loading } = useAuthenticatedSettings(true);
+const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onNavigateBack }) => {
+  const { settings, updateSettings, loading } = useAuthenticatedSettings(true); // SecuritySettings só aparece quando autenticado
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
-
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Tem certeza que deseja sair?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Sair', onPress: onLogout, style: 'destructive' },
-      ]
-    );
-  };
 
   /**
    * Atualizar timeout de bloqueio automático
@@ -102,14 +85,13 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onNavigateToHome}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={onNavigateBack}
+        >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.title}>Configurações</Text>
-        <Text style={styles.subtitle}>
-          {user.firstName} {user.lastName}
-        </Text>
-        <Text style={styles.email}>{user.email}</Text>
+        <Text style={styles.headerTitle}>Configurações de Segurança</Text>
       </View>
 
       <View style={styles.content}>
@@ -171,22 +153,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🔐 Autenticação</Text>
           
-          {/* Biometria */}
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Autenticação biométrica</Text>
-              <Text style={styles.settingDescription}>
-                Usar impressão digital para TODOS os logins e desbloqueios
-              </Text>
-            </View>
-            <Switch
-              value={settings.biometricEnabled}
-              onValueChange={(value) => handleLockSettingChange('biometricEnabled', value)}
-              trackColor={{ false: '#3A3A3A', true: '#4ECDC4' }}
-              thumbColor={settings.biometricEnabled ? '#fff' : '#666'}
-            />
-          </View>
-
           {/* Requer senha no desbloqueio */}
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
@@ -200,6 +166,22 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
               onValueChange={(value) => handleLockSettingChange('requirePasswordOnLock', value)}
               trackColor={{ false: '#3A3A3A', true: '#4ECDC4' }}
               thumbColor={settings.requirePasswordOnLock ? '#fff' : '#666'}
+            />
+          </View>
+
+          {/* Biometria */}
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Autenticação biométrica</Text>
+          <Text style={styles.settingDescription}>
+            Usar impressão digital
+          </Text>
+            </View>
+            <Switch
+              value={settings.biometricEnabled}
+              onValueChange={(value) => handleLockSettingChange('biometricEnabled', value)}
+              trackColor={{ false: '#3A3A3A', true: '#4ECDC4' }}
+              thumbColor={settings.biometricEnabled ? '#fff' : '#666'}
             />
           </View>
         </View>
@@ -216,20 +198,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
             </View>
           </View>
         </View>
-
-        {/* Informações do App */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📱 Sobre o App</Text>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoText}>Versão: 1.0.0</Text>
-            <Text style={styles.infoText}>Desenvolvido com React Native</Text>
-            <Text style={styles.infoText}>Backend: Node.js + PostgreSQL</Text>
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Sair da Conta</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Modal de seleção de timeout */}
@@ -275,24 +243,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
-    backgroundColor: '#2A2A2A',
   },
   backButton: {
     marginRight: 15,
   },
-  title: {
+  headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#fff',
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 14,
-    color: '#ecf0f1',
   },
   content: {
     paddingHorizontal: 20,
@@ -362,29 +320,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
   },
-  infoContainer: {
-    backgroundColor: '#2A2A2A',
-    padding: 15,
-    borderRadius: 12,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#999',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  logoutButton: {
-    backgroundColor: '#e74c3c',
-    margin: 20,
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -436,4 +371,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SettingsScreen;
+export default SecuritySettings;
