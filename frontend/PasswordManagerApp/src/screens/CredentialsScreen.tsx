@@ -17,7 +17,8 @@ import {
   CredentialPublic,
   CreateCredentialRequest,
   UpdateCredentialRequest,
-  CredentialFilters
+  CredentialFilters,
+  Credential as CredentialDetail
 } from '../types/credential';
 
 interface CredentialsScreenProps {
@@ -43,7 +44,7 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
   const [showForm, setShowForm] = useState(false);
   const [editingCredential, setEditingCredential] = useState<CredentialPublic | null>(null);
   const [viewingCredential, setViewingCredential] = useState<CredentialPublic | null>(null);
-  const [decryptedCredential, setDecryptedCredential] = useState<Credential | null>(null);
+  const [decryptedCredential, setDecryptedCredential] = useState<CredentialDetail | null>(null);
   const [showCredentialModal, setShowCredentialModal] = useState(false);
   const [masterPassword, setMasterPassword] = useState('');
   const [showMasterPasswordInput, setShowMasterPasswordInput] = useState(false);
@@ -172,11 +173,6 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
             <View style={styles.credentialField}>
               <Text style={styles.fieldLabel}>Senha</Text>
               <Text style={styles.fieldValue}>{decryptedCredential?.password || 'Não informado'}</Text>
-            </View>
-
-            <View style={styles.credentialField}>
-              <Text style={styles.fieldLabel}>URL</Text>
-              <Text style={styles.fieldValue}>{decryptedCredential?.url || 'Não informado'}</Text>
             </View>
 
             <View style={styles.credentialField}>

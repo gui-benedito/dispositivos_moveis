@@ -139,7 +139,6 @@ class CryptoService {
       const encryptedData = {
         encryptedUsername: this.encrypt(credentialData.username, key, iv),
         encryptedPassword: this.encrypt(credentialData.password, key, iv),
-        encryptedUrl: this.encrypt(credentialData.url, key, iv),
         encryptedNotes: this.encrypt(credentialData.notes, key, iv),
         encryptionKey: keyHash,
         iv: iv,
@@ -166,7 +165,6 @@ class CryptoService {
       const decryptedData = {
         username: this.decrypt(encryptedCredential.encryptedUsername, key),
         password: this.decrypt(encryptedCredential.encryptedPassword, key),
-        url: this.decrypt(encryptedCredential.encryptedUrl, key),
         notes: this.decrypt(encryptedCredential.encryptedNotes, key)
       };
 

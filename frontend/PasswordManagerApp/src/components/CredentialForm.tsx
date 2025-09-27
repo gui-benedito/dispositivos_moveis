@@ -352,24 +352,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
             </View>
           )}
 
-          {/* URL */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>URL</Text>
-            <TextInput
-              style={[styles.input, errors.url && styles.inputError]}
-              value={formData.url}
-              onChangeText={(value) => updateField('url', value)}
-              onBlur={() => touchField('url')}
-              placeholder="https://exemplo.com"
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-              editable={!loading}
-            />
-            {errors.url && touched.url && (
-              <Text style={styles.errorText}>{errors.url}</Text>
-            )}
-          </View>
+          {/* URL removida */}
 
           {/* Notas */}
           <View style={styles.inputContainer}>

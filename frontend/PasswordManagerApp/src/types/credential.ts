@@ -7,7 +7,6 @@ export interface Credential {
   category: string;
   username?: string;
   password: string;
-  url?: string;
   notes?: string;
   isFavorite: boolean;
   accessCount: number;
@@ -34,7 +33,6 @@ export interface CreateCredentialRequest {
   category?: string;
   username?: string;
   password: string;
-  url?: string;
   notes?: string;
   masterPassword: string;
   isFavorite?: boolean;
@@ -46,7 +44,6 @@ export interface UpdateCredentialRequest {
   category?: string;
   username?: string;
   password?: string;
-  url?: string;
   notes?: string;
   masterPassword: string;
   isFavorite?: boolean;
@@ -96,7 +93,6 @@ export interface CredentialFormData {
   category: string;
   username: string;
   password: string;
-  url: string;
   notes: string;
   isFavorite: boolean;
 }
@@ -107,7 +103,6 @@ export interface CredentialFormErrors {
   category?: string;
   username?: string;
   password?: string;
-  url?: string;
   notes?: string;
   masterPassword?: string;
 }

@@ -281,10 +281,6 @@ export class CredentialService {
       errors.push('Senha é obrigatória');
     }
 
-    if (data.url && !CredentialService.isValidUrl(data.url)) {
-      errors.push('URL deve ter um formato válido');
-    }
-
     if (!data.masterPassword?.trim()) {
       errors.push('Senha mestre é obrigatória');
     }
@@ -295,17 +291,7 @@ export class CredentialService {
     };
   }
 
-  /**
-   * Valida URL
-   */
-  private static isValidUrl(url: string): boolean {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  }
+  // URL removida das credenciais; nenhuma validação necessária
 
   /**
    * Formata dados de uma credencial para exibição

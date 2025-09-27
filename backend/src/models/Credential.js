@@ -63,11 +63,6 @@ const Credential = sequelize.define('Credential', {
     },
     comment: 'Senha criptografada'
   },
-  encryptedUrl: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-    comment: 'URL criptografada'
-  },
   encryptedNotes: {
     type: DataTypes.TEXT,
     allowNull: true,
@@ -149,7 +144,6 @@ Credential.prototype.toSafeJSON = function() {
   // Remover campos sensíveis
   delete values.encryptedUsername;
   delete values.encryptedPassword;
-  delete values.encryptedUrl;
   delete values.encryptedNotes;
   delete values.encryptionKey;
   delete values.iv;

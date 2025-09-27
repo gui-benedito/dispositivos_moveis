@@ -2,16 +2,6 @@
 
 Backend para o aplicativo de gerenciamento de senhas com criptografia AES-256.
 
-## 🚀 Funcionalidades Implementadas
-
-### Sprint 1 - RF01 (Sistema)
-- ✅ **Cadastro e autenticação básica**
-  - Hash seguro com Argon2 (mais seguro que bcrypt)
-  - Geração/validação de token JWT
-  - Rate-limit no login (5 tentativas por 15 minutos)
-  - Resposta padronizada de erros
-  - Política de senha mínima (8+ caracteres, maiúscula, minúscula, número, símbolo)
-
 ## 📋 Pré-requisitos
 
 - Node.js 18+ 
@@ -30,12 +20,7 @@ cd backend
 npm install
 ```
 
-3. **Configure as variáveis de ambiente:**
-```bash
-cp env.example .env
-```
-
-4. **Edite o arquivo `.env` com suas configurações:**
+3. **Edite o arquivo `.env` com suas configurações:**
 ```env
 # Database Configuration
 DB_HOST=localhost
@@ -50,9 +35,51 @@ JWT_EXPIRES_IN=24h
 JWT_REFRESH_EXPIRES_IN=7d
 
 # Server Configuration
+SERVER_HOST=0.0.0.0
+SERVER_PORT=3000
+# (Opcional) Compatibilidade com plataformas que usam PORT
 PORT=3000
 NODE_ENV=development
+
+# Rate Limiting (opcional)
+RATE_LIMIT_WINDOW_MS=900000   # 15 minutos
+RATE_LIMIT_MAX_REQUESTS=5     # máximo de tentativas por janela
 ```
+
+### Descrição das variáveis de ambiente
+
+- `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD`
+  - Configuram a conexão com o PostgreSQL conforme `src/config/database.js`.
+  - Ambientes: development, test, production (selecionado por `NODE_ENV`).
+
+- `JWT_SECRET`
+  - Chave secreta usada para assinar/verificar JWTs em `src/middleware/auth.js` e `src/middleware/sessionManager.js`.
+  - Use um valor forte e mantenha em segredo.
+
+- `JWT_EXPIRES_IN`
+  - Expiração do Access Token (padrão: `24h`).
+
+- `JWT_REFRESH_EXPIRES_IN`
+  - Expiração do Refresh Token (padrão: `7d`).
+
+- `SERVER_HOST` / `SERVER_PORT`
+  - Host e porta do servidor HTTP em `src/server.js`.
+  - Também utilizados na configuração do Swagger (`src/config/swagger.js`) para montar a URL do servidor em desenvolvimento.
+  - `PORT` é aceito como fallback para compatibilidade com plataformas de deploy.
+
+- `NODE_ENV`
+  - Define o ambiente (`development`, `test`, `production`).
+  - Em `development`, o CORS é permissivo e o Sequelize pode rodar com `alter` (ver `models/index.js`).
+
+- `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX_REQUESTS` (opcionais)
+  - Ajustam o rate limit do login em `src/middleware/rateLimiter.js`.
+  - Valores padrão: 15 minutos / 5 tentativas.
+
+### Dicas de configuração
+
+- Garanta que o banco PostgreSQL está acessível com as credenciais configuradas.
+- Use um `JWT_SECRET` robusto (>= 32 caracteres aleatórios) em produção.
+- Se for acessar via rede local (emulators/dispositivos), ajuste `SERVER_HOST` para o IP da sua máquina e libere a porta 3000 no firewall.
 
 5. **Crie o banco de dados PostgreSQL:**
 ```sql
@@ -175,29 +202,11 @@ Health check da API.
 #### GET `/api/`
 Informações da API.
 
-## 🔒 Segurança Implementada
-
-- **Hash de senhas**: Argon2id com configurações seguras
-- **JWT**: Tokens com expiração configurável
-- **Rate Limiting**: Proteção contra ataques de força bruta
-- **Validação**: Validação rigorosa de entrada
-- **CORS**: Configuração segura para desenvolvimento e produção
-- **Helmet**: Headers de segurança HTTP
-- **Bloqueio de conta**: Após 5 tentativas de login incorretas
-
 ## 📚 Documentação da API
 
 A API possui documentação completa no Swagger UI:
 
 **Acesse:** `http://localhost:3000/api-docs`
-
-### Funcionalidades do Swagger:
-- ✅ **Interface interativa** para testar todos os endpoints
-- ✅ **Autenticação JWT** integrada (botão "Authorize")
-- ✅ **Exemplos de requisição/resposta** para cada endpoint
-- ✅ **Validação de schemas** em tempo real
-- ✅ **Filtros e busca** para encontrar endpoints rapidamente
-- ✅ **Persistência de autorização** entre sessões
 
 ### Como usar o Swagger:
 
@@ -216,40 +225,6 @@ A API possui documentação completa no Swagger UI:
 2. Use a interface interativa para testar todos os endpoints
 3. Veja exemplos de requisição/resposta em tempo real
 
-### Com curl:
-
-**Cadastro:**
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "teste@exemplo.com",
-    "password": "MinhaSenh@123",
-    "firstName": "João",
-    "lastName": "Silva"
-  }'
-```
-
-**Login:**
-```bash
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "teste@exemplo.com",
-    "password": "MinhaSenh@123"
-  }'
-```
-
-**Perfil (com token):**
-```bash
-curl -X GET http://localhost:3000/api/auth/profile \
-  -H "Authorization: Bearer SEU_TOKEN_AQUI"
-```
-
-### Com Postman/Insomnia:
-Importe as rotas acima e teste com os mesmos dados.
-
-## 📁 Estrutura do Projeto
 
 ```
 backend/
@@ -274,26 +249,3 @@ backend/
 ├── .gitignore
 └── README.md
 ```
-
-## 🚨 Próximos Passos
-
-- [ ] Implementar autenticação biométrica (RF02)
-- [ ] Criar cofre de senhas criptografado (RF03)
-- [ ] Implementar gerador de senhas (RF04)
-- [ ] Adicionar bloqueio automático por inatividade (RF05)
-- [ ] Criar categorias de senhas (RF06)
-
-## 🐛 Troubleshooting
-
-### Erro de conexão com banco:
-- Verifique se o PostgreSQL está rodando
-- Confirme as credenciais no `.env`
-- Certifique-se de que o banco `password_manager_dev` existe
-
-### Erro de JWT:
-- Verifique se `JWT_SECRET` está definido no `.env`
-- Use um secret forte em produção
-
-### Rate limit:
-- Aguarde o tempo de reset ou reinicie o servidor
-- Em desenvolvimento, você pode ajustar os limites no `.env`

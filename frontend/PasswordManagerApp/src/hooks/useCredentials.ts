@@ -137,6 +137,7 @@ export const useCredentials = () => {
       if (response.success) {
         return response.data;
       }
+      throw new Error('Erro ao obter credencial');
     } catch (err: any) {
       setError(err.message || 'Erro ao obter credencial');
       throw err;
@@ -252,7 +253,6 @@ export const useCredentialForm = (initialData?: Partial<CreateCredentialRequest>
     category: 'Geral',
     username: '',
     password: '',
-    url: '',
     notes: '',
     masterPassword: '',
     isFavorite: false,
@@ -289,7 +289,6 @@ export const useCredentialForm = (initialData?: Partial<CreateCredentialRequest>
         else if (error.includes('Descrição')) newErrors.description = error;
         else if (error.includes('Categoria')) newErrors.category = error;
         else if (error.includes('Senha')) newErrors.password = error;
-        else if (error.includes('URL')) newErrors.url = error;
         else if (error.includes('Senha mestre')) newErrors.masterPassword = error;
         else newErrors.general = error;
       });
@@ -309,7 +308,6 @@ export const useCredentialForm = (initialData?: Partial<CreateCredentialRequest>
       category: 'Geral',
       username: '',
       password: '',
-      url: '',
       notes: '',
       masterPassword: '',
       isFavorite: false,

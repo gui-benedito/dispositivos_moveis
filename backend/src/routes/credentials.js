@@ -27,15 +27,10 @@ router.use(authenticateToken);
  *         category:
  *           type: string
  *           description: Categoria da credencial
- *         username:
- *           type: string
  *           description: Nome de usuário
  *         password:
  *           type: string
  *           description: Senha
- *         url:
- *           type: string
- *           description: URL do serviço
  *         notes:
  *           type: string
  *           description: Notas adicionais
@@ -44,43 +39,12 @@ router.use(authenticateToken);
  *           description: Se é favorita
  *         accessCount:
  *           type: integer
- *           description: Número de acessos
- *         lastAccessed:
- *           type: string
- *           format: date-time
- *           description: Último acesso
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- *     
- *     CreateCredentialRequest:
- *       type: object
- *       required:
- *         - title
- *         - password
- *         - masterPassword
- *       properties:
- *         title:
- *           type: string
- *           minLength: 1
- *           maxLength: 100
- *         description:
- *           type: string
- *         category:
- *           type: string
- *           minLength: 1
- *           maxLength: 50
- *           default: "Geral"
+{{ ... }}
  *         username:
  *           type: string
  *         password:
  *           type: string
  *           minLength: 1
- *         url:
- *           type: string
  *         notes:
  *           type: string
  *         masterPassword:
@@ -102,7 +66,6 @@ router.use(authenticateToken);
  *         description:
  *           type: string
  *         category:
- *           type: string
  *           minLength: 1
  *           maxLength: 50
  *         username:
@@ -110,8 +73,6 @@ router.use(authenticateToken);
  *         password:
  *           type: string
  *           minLength: 1
- *         url:
- *           type: string
  *         notes:
  *           type: string
  *         masterPassword:
@@ -125,7 +86,6 @@ router.use(authenticateToken);
  *       properties:
  *         length:
  *           type: integer
- *           minimum: 4
  *           maximum: 128
  *           default: 16
  *         includeUppercase:
@@ -193,10 +153,6 @@ const createCredentialValidation = [
     .trim()
     .isLength({ min: 1 })
     .withMessage('Senha mestre é obrigatória'),
-  body('url')
-    .optional()
-    .isURL()
-    .withMessage('URL deve ter um formato válido'),
   body('isFavorite')
     .optional()
     .isBoolean()
@@ -231,10 +187,6 @@ const updateCredentialValidation = [
     .trim()
     .isLength({ min: 1 })
     .withMessage('Senha mestre é obrigatória'),
-  body('url')
-    .optional()
-    .isURL()
-    .withMessage('URL deve ter um formato válido'),
   body('isFavorite')
     .optional()
     .isBoolean()

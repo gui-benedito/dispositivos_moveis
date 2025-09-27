@@ -133,7 +133,6 @@ class CredentialController {
    *         description: ID da credencial
    *     requestBody:
    *       required: true
-   *       content:
    *         application/json:
    *           schema:
    *             type: object
@@ -167,8 +166,6 @@ class CredentialController {
    *                     username:
    *                       type: string
    *                     password:
-   *                       type: string
-   *                     url:
    *                       type: string
    *                     notes:
    *                       type: string
@@ -253,7 +250,6 @@ class CredentialController {
           category: credential.category,
           username: decryptedData.username,
           password: decryptedData.password,
-          url: decryptedData.url,
           notes: decryptedData.notes,
           isFavorite: credential.isFavorite,
           accessCount: credential.accessCount + 1,
@@ -308,9 +304,6 @@ class CredentialController {
    *               password:
    *                 type: string
    *                 description: Senha
-   *               url:
-   *                 type: string
-   *                 description: URL do serviço
    *               notes:
    *                 type: string
    *                 description: Notas adicionais
@@ -371,7 +364,6 @@ class CredentialController {
         category = 'Geral',
         username,
         password,
-        url,
         notes,
         masterPassword,
         isFavorite = false
@@ -381,7 +373,6 @@ class CredentialController {
       const encryptedData = await cryptoService.encryptCredential({
         username,
         password,
-        url,
         notes
       }, masterPassword);
 
@@ -450,8 +441,6 @@ class CredentialController {
    *                 type: string
    *               password:
    *                 type: string
-   *               url:
-   *                 type: string
    *               notes:
    *                 type: string
    *               masterPassword:
@@ -509,7 +498,6 @@ class CredentialController {
         category,
         username,
         password,
-        url,
         notes,
         masterPassword,
         isFavorite
@@ -560,11 +548,10 @@ class CredentialController {
       if (isFavorite !== undefined) updateData.isFavorite = isFavorite;
 
       // Se há dados sensíveis para atualizar, re-criptografar
-      if (username !== undefined || password !== undefined || url !== undefined || notes !== undefined) {
+      if (username !== undefined || password !== undefined || notes !== undefined) {
         const encryptedData = await cryptoService.encryptCredential({
           username: username !== undefined ? username : (await cryptoService.decryptCredential(credential, masterPassword)).username,
           password: password !== undefined ? password : (await cryptoService.decryptCredential(credential, masterPassword)).password,
-          url: url !== undefined ? url : (await cryptoService.decryptCredential(credential, masterPassword)).url,
           notes: notes !== undefined ? notes : (await cryptoService.decryptCredential(credential, masterPassword)).notes
         }, masterPassword);
 
