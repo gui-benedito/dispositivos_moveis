@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import axios from 'axios';
+import { connectionManager } from './connectionManager';
 import { 
   BiometricType, 
   DeviceInfo, 
@@ -13,8 +14,25 @@ import {
   BiometricSessionsResponse
 } from '../types/biometric';
 
-// URL da API (usando a mesma configuração do apiSimple)
-const API_BASE_URL = 'http://192.168.0.68:3000/api';
+// Configuração da API - detecta ambiente e usa URL apropriada
+const getApiBaseUrl = () => {
+  // Usar variável de ambiente se disponível
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  }
+  
+  // Para Expo web, usar localhost
+  if (typeof window !== 'undefined') {
+    return 'http://localhost:3000/api';
+  }
+  
+  // Para React Native, usar localhost por padrão
+  return 'http://localhost:3000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🔗 BiometricService API Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -25,9 +43,24 @@ const api = axios.create({
   },
 });
 
-// Interceptor para adicionar token automaticamente
+// Interceptor para adicionar token automaticamente e detectar URL funcionando
 api.interceptors.request.use(
   async (config) => {
+    // Sempre verificar se temos uma URL funcionando
+    let workingUrl = connectionManager.getWorkingUrl();
+    if (!workingUrl) {
+      workingUrl = await connectionManager.findWorkingUrl();
+    }
+    
+    if (workingUrl) {
+      config.baseURL = workingUrl;
+      console.log('🔄 BiometricService usando URL detectada:', workingUrl);
+    } else {
+      config.baseURL = API_BASE_URL;
+      console.log('⚠️ BiometricService usando URL padrão:', API_BASE_URL);
+    }
+    
+    // Adicionar token de autenticação se disponível
     try {
       // Tentar buscar token do AsyncStorage primeiro (onde o login salva)
       const tokens = await AsyncStorage.getItem('authTokens');
@@ -35,20 +68,27 @@ api.interceptors.request.use(
         const parsedTokens = JSON.parse(tokens);
         if (parsedTokens.accessToken) {
           config.headers.Authorization = `Bearer ${parsedTokens.accessToken}`;
+          console.log('🔐 Token adicionado à requisição biométrica');
         }
       } else {
         // Fallback para SecureStore se não encontrar no AsyncStorage
         const token = await SecureStore.getItemAsync('accessToken');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('🔐 Token adicionado à requisição biométrica (SecureStore)');
         }
       }
     } catch (error) {
-      console.error('Erro ao obter token:', error);
+      console.error('❌ Erro ao obter token:', error);
     }
+    
+    console.log('📤 Requisição biométrica:', config.method?.toUpperCase(), config.url);
+    console.log('📤 Base URL:', config.baseURL);
+    console.log('📤 Dados:', config.data);
     return config;
   },
   (error) => {
+    console.error('❌ Erro na requisição biométrica:', error);
     return Promise.reject(error);
   }
 );

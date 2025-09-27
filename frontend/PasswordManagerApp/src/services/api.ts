@@ -5,6 +5,11 @@ import { connectionManager } from './connectionManager';
 
 // Configuração da API - detecta ambiente e usa URL apropriada
 const getApiBaseUrl = () => {
+  // Usar variável de ambiente se disponível
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  }
+  
   // Para Expo web, usar localhost
   if (typeof window !== 'undefined') {
     return 'http://localhost:3000/api';

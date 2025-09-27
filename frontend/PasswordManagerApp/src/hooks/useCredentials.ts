@@ -145,15 +145,6 @@ export const useCredentials = () => {
     }
   }, []);
 
-  // Copiar para área de transferência
-  const copyToClipboard = useCallback(async (text: string) => {
-    try {
-      await CredentialService.copyToClipboard(text);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao copiar para área de transferência');
-      throw err;
-    }
-  }, []);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -178,7 +169,6 @@ export const useCredentials = () => {
     updateCredential,
     deleteCredential,
     getCredential,
-    copyToClipboard,
 
     // Utilitários
     setError

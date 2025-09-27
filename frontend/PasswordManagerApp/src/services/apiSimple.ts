@@ -1,13 +1,29 @@
 import axios, { AxiosResponse } from 'axios';
 import { AuthResponse, LoginRequest, RegisterRequest, ApiError } from '../types/auth';
+import { connectionManager } from './connectionManager';
 
-// URL que funcionou no teste
-const WORKING_URL = 'http://192.168.0.68:3000/api';
+// Configuração da API - detecta ambiente e usa URL apropriada
+const getApiBaseUrl = () => {
+  // Usar variável de ambiente se disponível
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  }
+  
+  // Para Expo web, usar localhost
+  if (typeof window !== 'undefined') {
+    return 'http://localhost:3000/api';
+  }
+  
+  // Para React Native, usar localhost por padrão
+  return 'http://localhost:3000/api';
+};
 
-console.log('🔗 Usando URL funcionando:', WORKING_URL);
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🔗 ApiSimple API Base URL:', API_BASE_URL);
 
 const api = axios.create({
-  baseURL: WORKING_URL,
+  baseURL: API_BASE_URL,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
@@ -15,16 +31,30 @@ const api = axios.create({
   },
 });
 
-// Interceptor para logging
+// Interceptor para adicionar token automaticamente e detectar URL funcionando
 api.interceptors.request.use(
-  (config) => {
-    console.log('📤 Requisição:', config.method?.toUpperCase(), config.url);
+  async (config) => {
+    // Sempre verificar se temos uma URL funcionando
+    let workingUrl = connectionManager.getWorkingUrl();
+    if (!workingUrl) {
+      workingUrl = await connectionManager.findWorkingUrl();
+    }
+    
+    if (workingUrl) {
+      config.baseURL = workingUrl;
+      console.log('🔄 ApiSimple usando URL detectada:', workingUrl);
+    } else {
+      config.baseURL = API_BASE_URL;
+      console.log('⚠️ ApiSimple usando URL padrão:', API_BASE_URL);
+    }
+    
+    console.log('📤 Requisição ApiSimple:', config.method?.toUpperCase(), config.url);
     console.log('📤 Base URL:', config.baseURL);
     console.log('📤 Dados:', config.data);
     return config;
   },
   (error) => {
-    console.error('❌ Erro na requisição:', error);
+    console.error('❌ Erro na requisição ApiSimple:', error);
     return Promise.reject(error);
   }
 );

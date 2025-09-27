@@ -1,5 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { connectionManager } from './connectionManager';
 import {
   Credential,
   CredentialPublic,
@@ -19,8 +20,34 @@ import {
   AnalyzePasswordApiResponse
 } from '../types/credential';
 
-// URL da API (usando a mesma configuração do apiSimple)
-const API_BASE_URL = 'http://192.168.0.68:3000/api';
+// Configuração da API - detecta ambiente e usa URL apropriada
+const getApiBaseUrl = () => {
+  // Usar variável de ambiente se disponível
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  }
+  
+  // Para Expo web, usar localhost
+  if (typeof window !== 'undefined') {
+    return 'http://localhost:3000/api';
+  }
+  
+  // Para React Native, tentar diferentes IPs
+  const possibleUrls = [
+    'http://localhost:3000/api',
+    'http://127.0.0.1:3000/api',
+    'http://10.0.2.2:3000/api', // Android emulator
+    'http://192.168.1.100:3000/api', // IP local comum
+    'http://192.168.0.100:3000/api', // IP local comum
+  ];
+  
+  // Por enquanto, usar localhost e deixar o interceptor tentar outras URLs
+  return 'http://localhost:3000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🔗 CredentialService API Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -31,24 +58,82 @@ const api = axios.create({
   },
 });
 
-// Interceptor para adicionar token automaticamente
+// Interceptor para adicionar token automaticamente e detectar URL funcionando
 api.interceptors.request.use(
   async (config) => {
+    // Sempre verificar se temos uma URL funcionando
+    let workingUrl = connectionManager.getWorkingUrl();
+    if (!workingUrl) {
+      workingUrl = await connectionManager.findWorkingUrl();
+    }
+    
+    if (workingUrl) {
+      config.baseURL = workingUrl;
+      console.log('🔄 CredentialService usando URL detectada:', workingUrl);
+    } else {
+      config.baseURL = API_BASE_URL;
+      console.log('⚠️ CredentialService usando URL padrão:', API_BASE_URL);
+    }
+    
+    // Adicionar token de autenticação se disponível
     try {
       const tokens = await AsyncStorage.getItem('authTokens');
       if (tokens) {
         const parsedTokens = JSON.parse(tokens);
         if (parsedTokens.accessToken) {
           config.headers.Authorization = `Bearer ${parsedTokens.accessToken}`;
+          console.log('🔐 Token adicionado à requisição de credenciais');
         }
       }
     } catch (error) {
-      console.error('Erro ao obter token:', error);
+      console.error('❌ Erro ao obter token:', error);
     }
+    
+    console.log('📤 Requisição de credenciais:', config.method?.toUpperCase(), config.url);
+    console.log('📤 Base URL:', config.baseURL);
+    console.log('📤 Dados:', config.data);
     return config;
   },
   (error) => {
+    console.error('❌ Erro na requisição de credenciais:', error);
     return Promise.reject(error);
+  }
+);
+
+// Interceptor para tratar respostas
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    console.error('Erro na API de credenciais:', error);
+    
+    if (error.response?.data) {
+      // Retornar erro formatado da API
+      return Promise.reject(error.response.data);
+    }
+    
+    if (error.code === 'ECONNREFUSED') {
+      return Promise.reject({
+        success: false,
+        message: 'Não foi possível conectar ao servidor. Verifique se o backend está rodando na porta 3000.',
+        code: 'CONNECTION_REFUSED'
+      });
+    }
+    
+    if (error.code === 'NETWORK_ERROR' || !error.response) {
+      return Promise.reject({
+        success: false,
+        message: 'Erro de rede. Verifique sua conexão e se o backend está rodando.',
+        code: 'NETWORK_ERROR'
+      });
+    }
+    
+    return Promise.reject({
+      success: false,
+      message: 'Erro de conexão',
+      code: 'NETWORK_ERROR'
+    });
   }
 );
 
@@ -171,23 +256,6 @@ export class CredentialService {
     }
   }
 
-  /**
-   * Copia texto para a área de transferência (simulado)
-   * Em React Native, isso seria implementado com uma biblioteca específica
-   */
-  static async copyToClipboard(text: string): Promise<void> {
-    try {
-      // Em uma implementação real, você usaria uma biblioteca como @react-native-clipboard/clipboard
-      // Por enquanto, apenas simulamos o comportamento
-      console.log('Texto copiado para área de transferência:', text);
-      
-      // Salvar temporariamente no AsyncStorage para simular cópia
-      await AsyncStorage.setItem('lastCopiedText', text);
-    } catch (error) {
-      console.error('Erro ao copiar para área de transferência:', error);
-      throw error;
-    }
-  }
 
   /**
    * Valida dados de uma credencial

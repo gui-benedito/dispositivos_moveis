@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useBiometric } from '../hooks/useBiometric';
 import { useAuthenticatedSettings } from '../hooks/useAuthenticatedSettings';
+import { connectionManager } from '../services/connectionManager';
 
 interface LockScreenProps {
   onUnlock: () => void;
@@ -132,11 +133,16 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.0.68:3000/api/auth/verify-password', {
+      // Usar connectionManager para obter URL funcionando
+      const workingUrl = connectionManager.getWorkingUrl() || await connectionManager.findWorkingUrl() || 'http://localhost:3000/api';
+      const tokens = await AsyncStorage.getItem('authTokens');
+      const accessToken = tokens ? JSON.parse(tokens).accessToken : '';
+      
+      const response = await fetch(`${workingUrl}/auth/verify-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await AsyncStorage.getItem('authTokens')) ? JSON.parse(await AsyncStorage.getItem('authTokens')).accessToken : ''}`
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({ password })
       });

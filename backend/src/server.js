@@ -10,7 +10,8 @@ const { generalLimiter } = require('./middleware/rateLimiter');
 const swaggerSpecs = require('./config/swagger');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.SERVER_PORT || process.env.PORT || 3000;
+const HOST = process.env.SERVER_HOST || '0.0.0.0';
 
 // Middleware de segurança
 app.use(helmet({
@@ -128,12 +129,14 @@ const startServer = async () => {
     await syncDatabase();
     
     // Iniciar servidor em todas as interfaces (0.0.0.0)
-    app.listen(PORT, '0.0.0.0', () => {
+    app.listen(PORT, HOST, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
+      console.log(`🌐 Host: ${HOST}`);
       console.log(`📱 Ambiente: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔗 API disponível em:`);
       console.log(`   - http://localhost:${PORT}/api`);
       console.log(`   - http://127.0.0.1:${PORT}/api`);
+      console.log(`   - http://${process.env.SERVER_HOST || 'localhost'}:${PORT}/api`);
       console.log(`📚 Documentação Swagger: http://localhost:${PORT}/api-docs`);
       console.log(`❤️  Health check: http://localhost:${PORT}/api/health`);
     });

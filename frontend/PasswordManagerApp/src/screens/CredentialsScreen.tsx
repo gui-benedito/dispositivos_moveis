@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import { useCredentials } from '../hooks/useCredentials';
 import CredentialList from '../components/CredentialList';
@@ -35,7 +36,6 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
     updateCredential,
     deleteCredential,
     getCredential,
-    copyToClipboard,
     applyFilters,
     setError
   } = useCredentials();
@@ -116,42 +116,6 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
     }
   };
 
-  // Copiar senha para área de transferência
-  const handleCopyPassword = async (field: string) => {
-    if (!decryptedCredential) return;
-    
-    let valueToCopy = '';
-    let fieldName = '';
-    
-    switch (field) {
-      case 'username':
-        valueToCopy = decryptedCredential.username || '';
-        fieldName = 'Nome de usuário / Email';
-        break;
-      case 'password':
-        valueToCopy = decryptedCredential.password || '';
-        fieldName = 'Senha';
-        break;
-      case 'url':
-        valueToCopy = decryptedCredential.url || '';
-        fieldName = 'URL';
-        break;
-      default:
-        return;
-    }
-    
-    if (!valueToCopy) {
-      Alert.alert('Aviso', `${fieldName} não está disponível`);
-      return;
-    }
-    
-    try {
-      await copyToClipboard(valueToCopy);
-      Alert.alert('Sucesso', `${fieldName} copiado para área de transferência!`);
-    } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Erro ao copiar');
-    }
-  };
 
   // Aplicar filtros
   const handleApplyFilters = (newFilters: CredentialFilters) => {
@@ -183,7 +147,11 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
             </TouchableOpacity>
           </View>
 
-          <View style={styles.modalContent}>
+          <ScrollView
+            style={styles.modalContent}
+            contentContainerStyle={styles.modalContentContainer}
+            showsVerticalScrollIndicator
+          >
             <View style={styles.credentialField}>
               <Text style={styles.fieldLabel}>Categoria</Text>
               <Text style={styles.fieldValue}>{viewingCredential.category}</Text>
@@ -198,47 +166,17 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
 
             <View style={styles.credentialField}>
               <Text style={styles.fieldLabel}>Nome de usuário / Email</Text>
-              <View style={styles.fieldRow}>
-                <Text style={styles.fieldValue}>{decryptedCredential?.username || 'Não informado'}</Text>
-                {decryptedCredential?.username && (
-                  <TouchableOpacity
-                    style={styles.copyButton}
-                    onPress={() => handleCopyPassword('username')}
-                  >
-                    <Text style={styles.copyButtonText}>📋</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              <Text style={styles.fieldValue}>{decryptedCredential?.username || 'Não informado'}</Text>
             </View>
 
             <View style={styles.credentialField}>
               <Text style={styles.fieldLabel}>Senha</Text>
-              <View style={styles.fieldRow}>
-                <Text style={styles.fieldValue}>{decryptedCredential?.password || 'Não informado'}</Text>
-                {decryptedCredential?.password && (
-                  <TouchableOpacity
-                    style={styles.copyButton}
-                    onPress={() => handleCopyPassword('password')}
-                  >
-                    <Text style={styles.copyButtonText}>📋</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              <Text style={styles.fieldValue}>{decryptedCredential?.password || 'Não informado'}</Text>
             </View>
 
             <View style={styles.credentialField}>
               <Text style={styles.fieldLabel}>URL</Text>
-              <View style={styles.fieldRow}>
-                <Text style={styles.fieldValue}>{decryptedCredential?.url || 'Não informado'}</Text>
-                {decryptedCredential?.url && (
-                  <TouchableOpacity
-                    style={styles.copyButton}
-                    onPress={() => handleCopyPassword('url')}
-                  >
-                    <Text style={styles.copyButtonText}>📋</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              <Text style={styles.fieldValue}>{decryptedCredential?.url || 'Não informado'}</Text>
             </View>
 
             <View style={styles.credentialField}>
@@ -261,7 +199,7 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
                 Criado em: {new Date(viewingCredential.createdAt).toLocaleString('pt-BR')}
               </Text>
             </View>
-          </View>
+          </ScrollView>
 
           <View style={styles.modalFooter}>
             <TouchableOpacity
@@ -474,7 +412,10 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
+  },
+  modalContentContainer: {
     padding: 20,
+    paddingBottom: 40,
   },
   credentialField: {
     marginBottom: 20,
@@ -488,21 +429,10 @@ const styles = StyleSheet.create({
   fieldValue: {
     fontSize: 16,
     color: '#333',
-  },
-  fieldRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  copyButton: {
-    backgroundColor: '#3498db',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  copyButtonText: {
-    color: '#fff',
-    fontSize: 14,
+    marginTop: 5,
+    padding: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
   },
   credentialStats: {
     backgroundColor: '#f8f9fa',

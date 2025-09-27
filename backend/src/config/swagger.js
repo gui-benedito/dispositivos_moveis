@@ -20,7 +20,7 @@ const options = {
       {
         url: process.env.NODE_ENV === 'production' 
           ? 'https://api.passwordmanager.com' 
-          : 'http://localhost:3000',
+          : `http://${process.env.SERVER_HOST || 'localhost'}:${process.env.SERVER_PORT || 3000}`,
         description: process.env.NODE_ENV === 'production' 
           ? 'Servidor de Produção' 
           : 'Servidor de Desenvolvimento'
