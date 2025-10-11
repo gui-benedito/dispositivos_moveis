@@ -51,6 +51,14 @@ api.interceptors.request.use(
     console.log('📤 Requisição ApiSimple:', config.method?.toUpperCase(), config.url);
     console.log('📤 Base URL:', config.baseURL);
     console.log('📤 Dados:', config.data);
+    
+    // Log específico para email
+    if (config.data && config.data.email) {
+      console.log('🔧 Email sendo enviado:', config.data.email);
+      console.log('🔧 Tipo do email:', typeof config.data.email);
+      console.log('🔧 Length do email:', config.data.email.length);
+    }
+    
     return config;
   },
   (error) => {
@@ -67,6 +75,12 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('❌ Erro na API:', error);
+    
+    // Tratar status 202 como sucesso (2FA necessário)
+    if (error.response?.status === 202) {
+      console.log('🔧 Status 202 detectado - 2FA necessário');
+      return Promise.resolve(error.response);
+    }
     
     if (error.response?.data) {
       // Retornar erro formatado da API

@@ -319,6 +319,60 @@ class BiometricController {
       // Atualizar último uso da biometria
       await user.update({ biometricLastUsed: new Date() });
 
+      // Verificar se usuário tem 2FA ativado
+      const { TwoFactorAuth } = require('../models');
+      const twoFactorConfig = await TwoFactorAuth.findOne({
+        where: { 
+          userId: user.id, 
+          method: 'email',
+          isEnabled: true 
+        }
+      });
+
+      if (twoFactorConfig) {
+        console.log('🔧 Usuário tem 2FA ativado, enviando código...');
+        
+        // Gerar código de verificação
+        const EmailService = require('../services/emailService');
+        const verificationCode = EmailService.generateVerificationCode();
+        
+        // Salvar código temporário
+        const { VerificationCode } = require('../models');
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
+        
+        await VerificationCode.create({
+          userId: user.id,
+          email: user.email,
+          code: verificationCode,
+          type: '2fa_login',
+          expiresAt
+        });
+
+        // Enviar email (simulado para desenvolvimento)
+        try {
+          await EmailService.sendVerificationCode(user.email, verificationCode, `${user.firstName} ${user.lastName}`);
+          console.log('🔧 Email de 2FA enviado com sucesso');
+        } catch (emailError) {
+          console.error('❌ Erro ao enviar email 2FA:', emailError);
+          console.log('📧 [FALLBACK] Código de verificação para login:', verificationCode);
+        }
+
+        // Retornar resposta indicando que 2FA é necessário
+        return res.status(202).json({
+          success: true,
+          message: 'Código de verificação enviado para seu email',
+          data: {
+            requires2FA: true,
+            method: 'email',
+            email: user.email,
+            user: user.toSafeJSON() // Incluir dados do usuário
+          }
+        });
+      }
+
+      // Sem 2FA, prosseguir com login normal
+      console.log('🔧 Usuário sem 2FA, login biométrico normal');
+      
       // Gerar tokens
       const { accessToken, refreshToken } = generateTokens(user);
 

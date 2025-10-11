@@ -223,6 +223,22 @@ export class BiometricService {
 
       const response = await api.post<BiometricResponse>('/biometric/authenticate', requestData);
       
+      // Verificar se resposta indica 2FA necessário
+      if (response.data.data?.requires2FA) {
+        console.log('🔧 2FA necessário após autenticação biométrica');
+        // Retornar resposta indicando que 2FA é necessário
+        return {
+          success: true,
+          message: 'Autenticação biométrica realizada, 2FA necessário',
+          data: {
+            requires2FA: true,
+            method: response.data.data.method,
+            email: response.data.data.email,
+            user: response.data.data.user
+          }
+        };
+      }
+      
       // Salvar tokens se a autenticação foi bem-sucedida
       if (response.data.data?.tokens) {
         await AsyncStorage.setItem('authTokens', JSON.stringify(response.data.data.tokens));

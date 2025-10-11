@@ -27,7 +27,6 @@ const validateUserRegistration = [
   body('email')
     .isEmail()
     .withMessage('Email deve ter um formato válido')
-    .normalizeEmail()
     .isLength({ min: 5, max: 255 })
     .withMessage('Email deve ter entre 5 e 255 caracteres'),
   
@@ -58,8 +57,7 @@ const validateUserRegistration = [
 const validateUserLogin = [
   body('email')
     .isEmail()
-    .withMessage('Email deve ter um formato válido')
-    .normalizeEmail(),
+    .withMessage('Email deve ter um formato válido'),
   
   body('password')
     .notEmpty()

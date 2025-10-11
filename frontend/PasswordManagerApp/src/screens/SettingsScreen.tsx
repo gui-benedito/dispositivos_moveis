@@ -12,11 +12,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthenticatedSettings } from '../hooks/useAuthenticatedSettings';
+import { useTwoFactor } from '../hooks/useTwoFactor';
 import { LOCK_TIMEOUT_OPTIONS } from '../types/settings';
 
 interface SettingsScreenProps {
   onLogout: () => void;
   onNavigateToHome: () => void;
+  onNavigateTo2FASetup?: () => void;
   user: {
     firstName: string;
     lastName: string;
@@ -24,9 +26,19 @@ interface SettingsScreenProps {
   };
 }
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToHome, user }) => {
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToHome, onNavigateTo2FASetup, user }) => {
   const { settings, updateSettings, loading } = useAuthenticatedSettings(true);
+  const { status: twoFactorStatus, loadStatus } = useTwoFactor();
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
+  const [show2FAModal, setShow2FAModal] = useState(false);
+
+  // Carregar status do 2FA ao montar o componente
+  React.useEffect(() => {
+    loadStatus().catch((error) => {
+      console.warn('Erro ao carregar status do 2FA:', error);
+      // Não mostrar erro para o usuário, apenas logar
+    });
+  }, []);
 
   const handleLogout = () => {
     Alert.alert(
@@ -260,6 +272,30 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
               thumbColor={settings.requirePasswordOnLock ? '#fff' : '#666'}
             />
           </View>
+
+          {/* 2FA - Autenticação em Dois Fatores */}
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Autenticação em Dois Fatores (2FA)</Text>
+              <Text style={styles.settingDescription}>
+                {twoFactorStatus?.email?.enabled 
+                  ? '2FA ativado - Proteção adicional ativa'
+                  : 'Adicione uma camada extra de segurança'
+                }
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.twoFactorButton}
+              onPress={() => setShow2FAModal(true)}
+            >
+              <Text style={styles.twoFactorButtonText}>
+                {twoFactorStatus?.email?.enabled 
+                  ? 'Gerenciar 2FA' 
+                  : 'Configurar 2FA'
+                }
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Informações de Segurança */}
@@ -289,6 +325,88 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
           <Text style={styles.logoutButtonText}>Sair da Conta</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal de 2FA */}
+      <Modal
+        visible={show2FAModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShow2FAModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Autenticação em Dois Fatores</Text>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShow2FAModal(false)}
+            >
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            {/* Status atual do 2FA */}
+            <View style={styles.statusContainer}>
+              <Text style={styles.statusTitle}>Status Atual</Text>
+              
+
+              <View style={styles.statusItem}>
+                <Text style={styles.statusLabel}>Email:</Text>
+                <Text style={[
+                  styles.statusValue,
+                  { color: twoFactorStatus?.email?.enabled ? '#27ae60' : '#e74c3c' }
+                ]}>
+                  {twoFactorStatus?.email?.enabled ? 'Ativado' : 'Desativado'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Ações disponíveis */}
+            <View style={styles.actionsContainer}>
+              <Text style={styles.actionsTitle}>Ações Disponíveis</Text>
+              
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => {
+                  setShow2FAModal(false);
+                  if (onNavigateTo2FASetup) {
+                    onNavigateTo2FASetup();
+                  } else {
+                    Alert.alert('Info', 'Navegação para configuração de 2FA não implementada');
+                  }
+                }}
+              >
+                <Text style={styles.actionButtonText}>
+                  {twoFactorStatus?.email?.enabled 
+                    ? 'Gerenciar 2FA' 
+                    : 'Configurar 2FA'
+                  }
+                </Text>
+              </TouchableOpacity>
+
+              {twoFactorStatus?.email?.enabled && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.dangerButton]}
+                  onPress={() => {
+                    Alert.alert(
+                      'Desativar 2FA',
+                      'Tem certeza que deseja desativar a autenticação em dois fatores? Isso reduzirá a segurança da sua conta.',
+                      [
+                        { text: 'Cancelar', style: 'cancel' },
+                        { text: 'Desativar', style: 'destructive', onPress: () => {
+                          Alert.alert('Info', 'Funcionalidade de desativação será implementada');
+                        }}
+                      ]
+                    );
+                  }}
+                >
+                  <Text style={styles.dangerButtonText}>Desativar 2FA</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* Modal de seleção de timeout */}
       <Modal
@@ -491,6 +609,103 @@ const styles = StyleSheet.create({
   timeoutItemTextSelected: {
     color: '#4ECDC4',
     fontWeight: '600',
+  },
+  // Estilos para 2FA
+  twoFactorButton: {
+    backgroundColor: '#4ECDC4',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  twoFactorButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  // Estilos do modal 2FA
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalContent: {
+    flex: 1,
+    padding: 20,
+  },
+  statusContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  statusTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+  },
+  statusItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  statusLabel: {
+    fontSize: 16,
+    color: '#666',
+  },
+  statusValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  actionsContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+  },
+  actionsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+  },
+  actionButton: {
+    backgroundColor: '#4ECDC4',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  dangerButton: {
+    backgroundColor: '#e74c3c',
+  },
+  dangerButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

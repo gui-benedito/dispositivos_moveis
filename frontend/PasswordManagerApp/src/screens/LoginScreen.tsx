@@ -13,16 +13,19 @@ import {
 import { authService } from '../services/apiSimple';
 import { testConnection } from '../services/testConnection';
 import { BiometricService } from '../services/biometricService';
+import TwoFactorService from '../services/twoFactorService';
 import { LoginRequest, ApiError } from '../types/auth';
 import { BiometricType } from '../types/biometric';
+import { TwoFactorMethod } from '../types/twoFactor';
 import { useLocalSettings } from '../hooks/useLocalSettings';
 
 interface LoginScreenProps {
   onLoginSuccess: (tokens: any, userData: any) => void;
   onNavigateToRegister: () => void;
+  onNavigateTo2FA?: (method: TwoFactorMethod, onSuccess: (tokens: any) => void) => void;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToRegister }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToRegister, onNavigateTo2FA }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -134,6 +137,27 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToR
 
       const result = await BiometricService.authenticateBiometric(biometricType);
       
+      console.log('🔧 Resultado do login biométrico:', result);
+      
+      // Verificar se resposta indica 2FA necessário
+      if (result.data?.requires2FA) {
+        console.log('🔧 2FA necessário após login biométrico, navegando para verificação...');
+        
+        if (onNavigateTo2FA) {
+          console.log('🔧 Navegando para 2FA com callback (biométrico)');
+          onNavigateTo2FA('email', (tokens) => {
+            console.log('🔧 Callback 2FA chamado com tokens (biométrico):', tokens);
+            console.log('🔧 UserData do login biométrico:', result.data.user);
+            onLoginSuccess(tokens, result.data.user);
+          });
+          return;
+        } else {
+          Alert.alert('Erro', 'Navegação para 2FA não configurada');
+          return;
+        }
+      }
+      
+      // Login biométrico normal sem 2FA
       if (result.success && result.data?.tokens && result.data?.user) {
         Alert.alert('Sucesso', 'Login biométrico realizado com sucesso!');
         onLoginSuccess(result.data.tokens, result.data.user);
@@ -156,6 +180,27 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToR
       const loginData: LoginRequest = { email: email.trim(), password };
       const response = await authService.login(loginData);
       
+      console.log('🔧 Resposta do login:', response);
+      
+      // Verificar se resposta indica 2FA necessário
+      if (response.data?.requires2FA) {
+        console.log('🔧 2FA necessário, navegando para verificação...');
+        
+        if (onNavigateTo2FA) {
+          console.log('🔧 Navegando para 2FA com callback');
+          onNavigateTo2FA('email', (tokens) => {
+            console.log('🔧 Callback 2FA chamado com tokens:', tokens);
+            console.log('🔧 UserData do login:', response.data.user);
+            onLoginSuccess(tokens, response.data.user);
+          });
+          return;
+        } else {
+          Alert.alert('Erro', 'Navegação para 2FA não configurada');
+          return;
+        }
+      }
+      
+      // Login normal sem 2FA
       Alert.alert('Sucesso', 'Login realizado com sucesso!');
       onLoginSuccess(response.data.tokens, response.data.user);
     } catch (error) {

@@ -81,12 +81,18 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onRegisterSuccess, onNa
     setErrors({});
 
     try {
+      console.log('🔧 Email original no formData:', formData.email);
+      console.log('🔧 Email após trim:', formData.email.trim());
+      console.log('🔧 Email é igual após trim?', formData.email === formData.email.trim());
+      
       const registerData: RegisterRequest = {
         email: formData.email.trim(),
         password: formData.password,
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
       };
+      
+      console.log('🔧 Email no registerData:', registerData.email);
       
       const response = await authService.register(registerData);
       

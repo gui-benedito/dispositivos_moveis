@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthNavigator from './src/navigation/AuthNavigator';
+import TwoFactorNavigator from './src/navigation/TwoFactorNavigator';
 import HomeScreen from './src/screens/HomeScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import CredentialsScreen from './src/screens/CredentialsScreen';
@@ -14,7 +15,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings' | 'credentials'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings' | 'credentials' | '2fa'>('home');
 
   useEffect(() => {
     checkAuthStatus();
@@ -44,6 +45,10 @@ export default function App() {
 
   const handleAuthSuccess = async (tokens: AuthTokens, userData?: User) => {
     try {
+      console.log('🔧 App: handleAuthSuccess chamado');
+      console.log('🔧 App: Tokens:', tokens);
+      console.log('🔧 App: UserData:', userData);
+      
       // Salvar tokens e dados do usuário
       await AsyncStorage.setItem('authTokens', JSON.stringify(tokens));
       if (userData) {
@@ -51,6 +56,8 @@ export default function App() {
         setUser(userData);
       }
       setIsAuthenticated(true);
+      
+      console.log('🔧 App: Autenticação definida como true');
     } catch (error) {
       console.error('Erro ao salvar dados de autenticação:', error);
     }
@@ -82,6 +89,18 @@ export default function App() {
     setCurrentScreen('credentials');
   };
 
+  const handleNavigateTo2FA = () => {
+    setCurrentScreen('2fa');
+  };
+
+  const handle2FASuccess = () => {
+    setCurrentScreen('settings');
+  };
+
+  const handle2FACancel = () => {
+    setCurrentScreen('settings');
+  };
+
   if (isLoading) {
     return null; // Ou uma tela de loading
   }
@@ -104,6 +123,12 @@ export default function App() {
                 user={user} 
                 onLogout={handleLogout}
                 onNavigateToHome={handleNavigateToHome}
+                onNavigateTo2FASetup={handleNavigateTo2FA}
+              />
+            ) : currentScreen === '2fa' ? (
+              <TwoFactorNavigator
+                onSuccess={handle2FASuccess}
+                onCancel={handle2FACancel}
               />
             ) : (
               <CredentialsScreen 
