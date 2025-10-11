@@ -33,23 +33,66 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToR
   // Usar configurações locais
   const { settings } = useLocalSettings();
 
-  // Verificar suporte biométrico ao carregar a tela e quando configurações mudarem
+  // Verificar suporte biométrico ao carregar a tela e quando email mudar
   React.useEffect(() => {
-    checkBiometricSupport();
-  }, [settings.biometricEnabled]);
+    // Debounce para evitar muitas verificações
+    const timeoutId = setTimeout(() => {
+      if (email.trim() && isEmailValidForCheck(email.trim())) {
+        checkBiometricSupport();
+      } else {
+        setBiometricAvailable(false);
+      }
+    }, 800); // Aumentar debounce para 800ms
+
+    return () => clearTimeout(timeoutId);
+  }, [email]);
+
+  // Função para validar email
+  const isValidEmail = (email: string): boolean => {
+    return /\S+@\S+\.\S+/.test(email);
+  };
+
+  // Função para verificar se email é válido para verificação
+  const isEmailValidForCheck = (email: string): boolean => {
+    return email.length >= 5 && isValidEmail(email);
+  };
 
   const checkBiometricSupport = async () => {
     try {
       const supported = await BiometricService.isBiometricSupported();
       setBiometricSupported(supported);
       
-      if (supported) {
-        const hasSession = await BiometricService.hasValidBiometricSession();
-        // Só disponível se configuração habilitada E sistema suporta E tem sessão
-        setBiometricAvailable(settings.biometricEnabled && hasSession);
+      if (supported && email.trim() && isEmailValidForCheck(email.trim())) {
+        // Verificar se o usuário tem biometria habilitada no backend
+        try {
+          const userBiometricStatus = await BiometricService.checkUserBiometric(email.trim());
+          const hasSession = await BiometricService.hasValidBiometricSession();
+          
+          // Só disponível se usuário tem biometria habilitada no backend E tem sessão válida
+          setBiometricAvailable(userBiometricStatus.success && 
+                               userBiometricStatus.data?.biometricEnabled && 
+                               hasSession);
+        } catch (error: any) {
+          // Tratar erros específicos sem logar como erro
+          if (error.response?.status === 404) {
+            // Usuário não encontrado - normal, não é erro
+            setBiometricAvailable(false);
+          } else if (error.response?.status === 400) {
+            // Email inválido - normal durante digitação
+            setBiometricAvailable(false);
+          } else {
+            // Outros erros - logar apenas se for inesperado
+            console.warn('Aviso ao verificar biometria:', error.message);
+            setBiometricAvailable(false);
+          }
+        }
+      } else {
+        setBiometricAvailable(false);
       }
     } catch (error) {
-      console.error('Erro ao verificar biometria:', error);
+      // Erro geral - apenas logar se for crítico
+      console.warn('Erro ao verificar suporte biométrico:', error);
+      setBiometricAvailable(false);
     }
   };
 
@@ -169,27 +212,27 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToR
             {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
           </View>
 
-          {/* Se biometria habilitada, mostrar apenas botão de biometria */}
-          {settings.biometricEnabled && biometricSupported && biometricAvailable ? (
+          {/* Botão de login com senha - sempre disponível */}
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Entrar com Senha</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Botão de biometria - apenas se disponível */}
+          {biometricSupported && biometricAvailable && (
             <TouchableOpacity
               style={[styles.biometricButton, loading && styles.buttonDisabled]}
               onPress={handleBiometricLogin}
               disabled={loading}
             >
               <Text style={styles.biometricButtonText}>🔐 Entrar com Biometria</Text>
-            </TouchableOpacity>
-          ) : (
-            /* Se biometria desabilitada, mostrar apenas botão de senha */
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Entrar</Text>
-              )}
             </TouchableOpacity>
           )}
 

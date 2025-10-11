@@ -24,6 +24,14 @@ const validateBiometricAuth = [
   handleValidationErrors
 ];
 
+// Validações para verificar biometria do usuário
+const validateCheckUser = [
+  body('email')
+    .isEmail()
+    .withMessage('Email deve ter um formato válido'),
+  handleValidationErrors
+];
+
 // Rota para ativar biometria (requer autenticação)
 router.post('/enable', 
   authenticateToken,
@@ -53,6 +61,12 @@ router.get('/status',
 router.get('/sessions', 
   authenticateToken,
   BiometricController.getBiometricSessions
+);
+
+// Rota para verificar se usuário tem biometria habilitada (não requer autenticação)
+router.post('/check-user', 
+  validateCheckUser,
+  BiometricController.checkUserBiometric
 );
 
 module.exports = router;

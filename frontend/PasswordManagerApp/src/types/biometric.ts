@@ -36,6 +36,7 @@ export interface AuthenticateBiometricRequest {
   sessionId: string;
   biometricType: BiometricType;
   deviceInfo?: DeviceInfo;
+  email?: string;
 }
 
 export interface BiometricResponse {

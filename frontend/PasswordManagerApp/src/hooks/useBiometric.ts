@@ -130,6 +130,16 @@ export const useBiometric = () => {
     }
   };
 
+  const checkUserBiometric = async (email: string) => {
+    try {
+      const result = await BiometricService.checkUserBiometric(email);
+      return result;
+    } catch (err: any) {
+      setError(err.message || 'Erro ao verificar biometria do usuário');
+      throw err;
+    }
+  };
+
   return {
     // Estado
     isSupported,
@@ -146,6 +156,7 @@ export const useBiometric = () => {
     getBiometricSessions,
     hasValidSession,
     clearBiometricData,
-    checkBiometricSupport
+    checkBiometricSupport,
+    checkUserBiometric
   };
 };

@@ -198,10 +198,18 @@ export class BiometricService {
         throw new Error('Autenticação biométrica local falhou');
       }
 
-      // Obter sessionId salvo
+      // Obter sessionId salvo e dados do usuário
       const sessionId = await AsyncStorage.getItem('biometricSessionId');
-      if (!sessionId) {
-        throw new Error('Sessão biométrica não encontrada');
+      const userData = await AsyncStorage.getItem('userData');
+      let email = null;
+      
+      if (userData) {
+        try {
+          const parsedUserData = JSON.parse(userData);
+          email = parsedUserData.email;
+        } catch (error) {
+          console.warn('Erro ao parsear dados do usuário:', error);
+        }
       }
 
       // Autenticar no backend
@@ -209,7 +217,8 @@ export class BiometricService {
       const requestData: AuthenticateBiometricRequest = {
         sessionId,
         biometricType,
-        deviceInfo
+        deviceInfo,
+        email // Incluir email para recuperação de sessão
       };
 
       const response = await api.post<BiometricResponse>('/biometric/authenticate', requestData);
@@ -218,6 +227,11 @@ export class BiometricService {
       if (response.data.data?.tokens) {
         await AsyncStorage.setItem('authTokens', JSON.stringify(response.data.data.tokens));
         await AsyncStorage.setItem('userData', JSON.stringify(response.data.data.user));
+      }
+
+      // Atualizar sessionId se foi recriado
+      if (response.data.data?.sessionId) {
+        await AsyncStorage.setItem('biometricSessionId', response.data.data.sessionId);
       }
 
       return response.data;
@@ -274,6 +288,26 @@ export class BiometricService {
       await AsyncStorage.removeItem('biometricSessionId');
     } catch (error) {
       console.error('Erro ao limpar dados biométricos:', error);
+    }
+  }
+
+  /**
+   * Verifica se um usuário tem biometria habilitada
+   */
+  static async checkUserBiometric(email: string): Promise<BiometricResponse> {
+    try {
+      const response = await api.post<BiometricResponse>('/biometric/check-user', { email });
+      return response.data;
+    } catch (error: any) {
+      // Não logar como erro para casos esperados (404, 400)
+      if (error.response?.status === 404 || error.response?.status === 400) {
+        // Usuário não encontrado ou email inválido - casos normais
+        throw error.response?.data || error;
+      } else {
+        // Apenas logar erros inesperados
+        console.error('Erro ao verificar biometria do usuário:', error);
+        throw error.response?.data || error;
+      }
     }
   }
 }

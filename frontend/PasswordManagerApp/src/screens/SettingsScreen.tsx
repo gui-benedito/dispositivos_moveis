@@ -69,6 +69,64 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
   };
 
   /**
+   * Atualizar configuração de biometria
+   */
+  const handleBiometricSettingChange = async (value: boolean) => {
+    try {
+      if (value) {
+        // Ativar biometria - verificar se dispositivo suporta
+        const { BiometricService } = await import('../services/biometricService');
+        const isSupported = await BiometricService.isBiometricSupported();
+        
+        if (!isSupported) {
+          Alert.alert('Biometria Indisponível', 'Seu dispositivo não suporta autenticação biométrica ou não há biometria configurada.');
+          return;
+        }
+
+        // Obter tipos disponíveis
+        const availableTypes = await BiometricService.getAvailableBiometricTypes();
+        if (availableTypes.length === 0) {
+          Alert.alert('Biometria Indisponível', 'Nenhum tipo de biometria está disponível no seu dispositivo.');
+          return;
+        }
+
+        // Usar o primeiro tipo disponível (fingerprint)
+        const biometricType = availableTypes[0];
+        
+        // Ativar biometria no backend
+        const result = await BiometricService.enableBiometric(biometricType);
+        if (result.success) {
+          // Atualizar configurações locais
+          await updateSettings({ 
+            biometricEnabled: true, 
+            biometricType: biometricType 
+          });
+          Alert.alert('Sucesso', 'Autenticação biométrica ativada com sucesso!');
+        } else {
+          Alert.alert('Erro', 'Falha ao ativar biometria no servidor');
+        }
+      } else {
+        // Desativar biometria
+        const { BiometricService } = await import('../services/biometricService');
+        const result = await BiometricService.disableBiometric();
+        if (result.success) {
+          // Atualizar configurações locais
+          await updateSettings({ 
+            biometricEnabled: false, 
+            biometricType: undefined 
+          });
+          Alert.alert('Sucesso', 'Autenticação biométrica desativada com sucesso!');
+        } else {
+          Alert.alert('Erro', 'Falha ao desativar biometria no servidor');
+        }
+      }
+    } catch (error: any) {
+      console.error('Erro ao configurar biometria:', error);
+      Alert.alert('Erro', error.message || 'Erro ao configurar biometria');
+    }
+  };
+
+  /**
    * Obter label do timeout atual
    */
   const getCurrentTimeoutLabel = () => {
@@ -181,7 +239,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
             </View>
             <Switch
               value={settings.biometricEnabled}
-              onValueChange={(value) => handleLockSettingChange('biometricEnabled', value)}
+              onValueChange={handleBiometricSettingChange}
               trackColor={{ false: '#3A3A3A', true: '#4ECDC4' }}
               thumbColor={settings.biometricEnabled ? '#fff' : '#666'}
             />

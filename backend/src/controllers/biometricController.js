@@ -237,10 +237,10 @@ class BiometricController {
    */
   static async authenticateBiometric(req, res) {
     try {
-      const { sessionId, biometricType, deviceInfo } = req.body;
+      const { sessionId, biometricType, deviceInfo, email } = req.body;
 
       // Buscar sessão biométrica
-      const session = await BiometricSession.findOne({
+      let session = await BiometricSession.findOne({
         where: { sessionId },
         include: [{
           model: User,
@@ -248,6 +248,33 @@ class BiometricController {
           where: { isActive: true }
         }]
       });
+
+      // Se não encontrou sessão, tentar encontrar usuário por email e recriar sessão
+      if (!session && email) {
+        const user = await User.findOne({ 
+          where: { email, isActive: true, biometricEnabled: true } 
+        });
+        
+        if (user) {
+          // Recriar sessão biométrica para o usuário
+          const newSessionId = crypto.randomUUID();
+          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias
+
+          session = await BiometricSession.create({
+            userId: user.id,
+            sessionId: newSessionId,
+            biometricType: user.biometricType,
+            deviceInfo: deviceInfo || {},
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent'),
+            expiresAt: expiresAt,
+            lastUsed: new Date()
+          });
+
+          // Incluir o usuário na sessão
+          session.user = user;
+        }
+      }
 
       if (!session) {
         return res.status(401).json({
@@ -309,7 +336,8 @@ class BiometricController {
           tokens: {
             accessToken,
             refreshToken
-          }
+          },
+          sessionId: session.sessionId // Incluir sessionId na resposta
         }
       });
     } catch (error) {
@@ -481,6 +509,94 @@ class BiometricController {
       });
     } catch (error) {
       console.error('Erro ao listar sessões biométricas:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor',
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/biometric/check-user:
+   *   post:
+   *     summary: Verificar se usuário tem biometria habilitada
+   *     description: Verifica se um usuário tem biometria habilitada sem precisar de autenticação
+   *     tags: [Biometric]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - email
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 format: email
+   *                 description: Email do usuário
+   *     responses:
+   *       200:
+   *         description: Status da biometria obtido com sucesso
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     biometricEnabled:
+   *                       type: boolean
+   *                     biometricType:
+   *                       type: string
+   *       404:
+   *         description: Usuário não encontrado
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ErrorResponse'
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
+   */
+  static async checkUserBiometric(req, res) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email é obrigatório',
+          code: 'EMAIL_REQUIRED'
+        });
+      }
+
+      const user = await User.findOne({
+        where: { email, isActive: true },
+        attributes: ['id', 'email', 'biometricEnabled', 'biometricType']
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuário não encontrado',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: {
+          biometricEnabled: user.biometricEnabled,
+          biometricType: user.biometricType
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao verificar biometria do usuário:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
