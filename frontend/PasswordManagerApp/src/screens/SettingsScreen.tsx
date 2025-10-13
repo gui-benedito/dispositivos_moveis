@@ -28,9 +28,10 @@ interface SettingsScreenProps {
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToHome, onNavigateTo2FASetup, user }) => {
   const { settings, updateSettings, loading } = useAuthenticatedSettings(true);
-  const { status: twoFactorStatus, loadStatus } = useTwoFactor();
+  const { status: twoFactorStatus, loadStatus, disable2FA } = useTwoFactor();
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
   const [show2FAModal, setShow2FAModal] = useState(false);
+  const [showMasterPasswordModal, setShowMasterPasswordModal] = useState(false);
 
   // Carregar status do 2FA ao montar o componente
   React.useEffect(() => {
@@ -77,6 +78,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
       }
     } catch (error) {
       Alert.alert('Erro', 'Erro ao atualizar configurações');
+    }
+  };
+
+  /**
+   * Desativar 2FA
+   */
+  const handleDisable2FA = async () => {
+    try {
+      const result = await disable2FA('email', '');
+      
+      if (result.success) {
+        Alert.alert('Sucesso', '2FA desativado com sucesso');
+        setShow2FAModal(false);
+        // Recarregar status
+        await loadStatus();
+      } else {
+        Alert.alert('Erro', result.message || 'Erro ao desativar 2FA');
+      }
+    } catch (error: any) {
+      console.error('Erro ao desativar 2FA:', error);
+      Alert.alert('Erro', error.message || 'Erro ao desativar 2FA');
     }
   };
 
@@ -273,6 +295,20 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
             />
           </View>
 
+          {/* Senha Mestra */}
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => setShowMasterPasswordModal(true)}
+          >
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Senha Mestra</Text>
+              <Text style={styles.settingDescription}>
+                Configurar senha para acessar notas seguras
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
+
           {/* 2FA - Autenticação em Dois Fatores */}
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
@@ -394,7 +430,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
                       [
                         { text: 'Cancelar', style: 'cancel' },
                         { text: 'Desativar', style: 'destructive', onPress: () => {
-                          Alert.alert('Info', 'Funcionalidade de desativação será implementada');
+                          handleDisable2FA();
                         }}
                       ]
                     );
@@ -433,6 +469,58 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
               keyExtractor={(item) => item.value.toString()}
               style={styles.timeoutList}
             />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Senha Mestra */}
+      <Modal
+        visible={showMasterPasswordModal}
+        animationType="slide"
+        onRequestClose={() => setShowMasterPasswordModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              onPress={() => setShowMasterPasswordModal(false)}
+              style={styles.closeButton}
+            >
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Senha Mestra</Text>
+            <View style={styles.placeholder} />
+          </View>
+
+          <View style={styles.modalContent}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="shield-checkmark" size={64} color="#4ECDC4" />
+            </View>
+
+            <Text style={styles.modalTitle}>Configurar Senha Mestra</Text>
+            <Text style={styles.modalDescription}>
+              A senha mestra é usada para proteger suas notas seguras. 
+              Escolha uma senha forte e memorize-a bem.
+            </Text>
+
+            <View style={styles.featureList}>
+              <Text style={styles.featureItem}>🔐 Protege notas criptografadas</Text>
+              <Text style={styles.featureItem}>🛡️ Acesso adicional de segurança</Text>
+              <Text style={styles.featureItem}>🔒 Diferente da senha de login</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => {
+                setShowMasterPasswordModal(false);
+                Alert.alert(
+                  'Em Desenvolvimento',
+                  'A configuração da senha mestra será implementada em breve.',
+                  [{ text: 'OK' }]
+                );
+              }}
+            >
+              <Text style={styles.actionButtonText}>Configurar Senha Mestra</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -706,6 +794,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  featureList: {
+    marginVertical: 20,
+  },
+  featureItem: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 8,
+    paddingLeft: 10,
+  },
+  placeholder: {
+    width: 24,
   },
 });
 

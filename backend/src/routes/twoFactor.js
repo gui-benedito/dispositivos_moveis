@@ -39,11 +39,6 @@ const validate2FADisable = [
   body('method')
     .isIn(['totp', 'sms', 'email'])
     .withMessage('Método deve ser totp, sms ou email'),
-  body('code')
-    .notEmpty()
-    .withMessage('Código é obrigatório')
-    .isLength({ min: 4, max: 8 })
-    .withMessage('Código deve ter entre 4 e 8 caracteres'),
   handleValidationErrors
 ];
 

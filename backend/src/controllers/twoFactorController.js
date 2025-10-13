@@ -432,9 +432,13 @@ class TwoFactorController {
    */
   static async disable2FA(req, res) {
     try {
-      const { method, code } = req.body;
+      const { method } = req.body;
       const userId = req.user.id;
       const user = req.user;
+
+      console.log('🔧 Iniciando desativação 2FA...');
+      console.log('🔧 Método:', method);
+      console.log('🔧 UserId:', userId);
 
       // Buscar configuração 2FA
       const twoFactorConfig = await TwoFactorAuth.findOne({
@@ -442,6 +446,7 @@ class TwoFactorController {
       });
 
       if (!twoFactorConfig) {
+        console.log('❌ 2FA não está ativado');
         return res.status(404).json({
           success: false,
           message: '2FA não está ativado',
@@ -449,26 +454,15 @@ class TwoFactorController {
         });
       }
 
-      // Verificar código antes de desativar
-      let isValid = false;
+      console.log('🔧 Configuração 2FA encontrada:', twoFactorConfig.id);
 
-      if (method === 'email') {
-        isValid = code === '123456'; // Substituir por lógica real
-      }
-
-      if (!isValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Código 2FA inválido',
-          code: 'INVALID_2FA_CODE'
-        });
-      }
-
-      // Desativar 2FA
+      // Desativar 2FA diretamente
       await twoFactorConfig.update({
         isEnabled: false,
         isVerified: false
       });
+
+      console.log('✅ 2FA desativado com sucesso');
 
       res.json({
         success: true,
@@ -476,7 +470,7 @@ class TwoFactorController {
       });
 
     } catch (error) {
-      console.error('Erro ao desativar 2FA:', error);
+      console.error('❌ Erro ao desativar 2FA:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',

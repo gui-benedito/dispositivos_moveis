@@ -92,6 +92,7 @@ const validateRefreshToken = [
 
 module.exports = {
   handleValidationErrors,
+  validateRequest: handleValidationErrors,
   validateUserRegistration,
   validateUserLogin,
   validatePasswordChange,

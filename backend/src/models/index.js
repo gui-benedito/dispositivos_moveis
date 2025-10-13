@@ -5,6 +5,7 @@ const Credential = require('./Credential');
 const UserSettings = require('./UserSettings');
 const TwoFactorAuth = require('./TwoFactorAuth');
 const VerificationCode = require('./VerificationCode');
+const Note = require('./Note');
 
 // Associações entre modelos
 User.hasMany(BiometricSession, { foreignKey: 'userId', as: 'biometricSessions' });
@@ -21,6 +22,9 @@ TwoFactorAuth.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(VerificationCode, { foreignKey: 'userId', as: 'verificationCodes' });
 VerificationCode.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(Note, { foreignKey: 'userId', as: 'notes' });
+Note.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Sincronizar modelos com o banco de dados
 const syncDatabase = async () => {
@@ -49,5 +53,6 @@ module.exports = {
   UserSettings,
   TwoFactorAuth,
   VerificationCode,
+  Note,
   syncDatabase
 };

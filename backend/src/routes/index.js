@@ -7,6 +7,7 @@ const biometricRoutes = require('./biometric');
 const credentialRoutes = require('./credentials');
 const settingsRoutes = require('./settings');
 const twoFactorRoutes = require('./twoFactor');
+const noteRoutes = require('./notes');
 
 // Configurar rotas
 router.use('/auth', authRoutes);
@@ -14,6 +15,7 @@ router.use('/biometric', biometricRoutes);
 router.use('/credentials', credentialRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/2fa', twoFactorRoutes);
+router.use('/notes', noteRoutes);
 
 /**
  * @swagger
@@ -96,6 +98,7 @@ router.get('/', (req, res) => {
       credentials: '/api/credentials',
       settings: '/api/settings',
       twoFactor: '/api/2fa',
+      notes: '/api/notes',
       health: '/api/health'
     }
   });

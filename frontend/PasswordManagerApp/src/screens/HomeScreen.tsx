@@ -11,6 +11,7 @@ interface HomeScreenProps {
   onLogout: () => void;
   onNavigateToSettings: () => void;
   onNavigateToCredentials: () => void;
+  onNavigateToNotes: () => void;
   user: {
     firstName: string;
     lastName: string;
@@ -18,7 +19,7 @@ interface HomeScreenProps {
   };
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings, onNavigateToCredentials, user }) => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings, onNavigateToCredentials, onNavigateToNotes, user }) => {
   const handleLogout = () => {
     Alert.alert(
       'Logout',
@@ -57,6 +58,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings,
 
         <TouchableOpacity style={styles.credentialsButton} onPress={onNavigateToCredentials}>
           <Text style={styles.credentialsButtonText}>🔐 Acessar Cofre de Senhas</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.notesButton} onPress={onNavigateToNotes}>
+          <Text style={styles.notesButtonText}>📝 Notas Seguras</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.settingsButton} onPress={onNavigateToSettings}>
@@ -138,6 +143,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   credentialsButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  notesButton: {
+    backgroundColor: '#4ECDC4',
+    marginTop: 15,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  notesButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
