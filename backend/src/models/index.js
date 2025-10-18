@@ -6,6 +6,7 @@ const UserSettings = require('./UserSettings');
 const TwoFactorAuth = require('./TwoFactorAuth');
 const VerificationCode = require('./VerificationCode');
 const Note = require('./Note');
+const Backup = require('./Backup');
 
 // Associações entre modelos
 User.hasMany(BiometricSession, { foreignKey: 'userId', as: 'biometricSessions' });
@@ -26,21 +27,31 @@ VerificationCode.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(Note, { foreignKey: 'userId', as: 'notes' });
 Note.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+User.hasMany(Backup, { foreignKey: 'userId', as: 'backups' });
+Backup.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 // Sincronizar modelos com o banco de dados
 const syncDatabase = async () => {
   try {
     await sequelize.authenticate();
     console.log('✅ Conexão com banco de dados estabelecida com sucesso.');
     
-    // Sincronizar modelos (force: true apenas em desenvolvimento)
-    await sequelize.sync({ 
-      force: process.env.NODE_ENV === 'development' ? false : false,
-      alter: process.env.NODE_ENV === 'development' ? true : false
-    });
+    // Configuração de sincronização baseada no ambiente
+    const syncOptions = {
+      force: false, // Nunca forçar (não apaga dados)
+      alter: process.env.NODE_ENV === 'development' ? true : false // Alterar tabelas em desenvolvimento
+    };
+    
+    console.log('🔄 Sincronizando modelos com banco de dados...');
+    console.log('📋 Opções de sincronização:', syncOptions);
+    
+    await sequelize.sync(syncOptions);
     
     console.log('✅ Modelos sincronizados com banco de dados.');
+    console.log('📊 Tabelas disponíveis:', Object.keys(sequelize.models));
   } catch (error) {
     console.error('❌ Erro ao conectar com banco de dados:', error);
+    console.error('💡 Verifique se o PostgreSQL está rodando e as credenciais estão corretas');
     process.exit(1);
   }
 };
@@ -54,5 +65,6 @@ module.exports = {
   TwoFactorAuth,
   VerificationCode,
   Note,
+  Backup,
   syncDatabase
 };

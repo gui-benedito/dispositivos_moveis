@@ -18,8 +18,7 @@ const TwoFactorAuth = sequelize.define('TwoFactorAuth', {
   },
   method: {
     type: DataTypes.ENUM('totp', 'sms', 'email'),
-    allowNull: false,
-    comment: 'Método de 2FA (TOTP, SMS, Email)'
+    allowNull: false
   },
   secret: {
     type: DataTypes.STRING,

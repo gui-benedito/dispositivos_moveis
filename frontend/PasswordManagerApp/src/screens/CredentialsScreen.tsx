@@ -108,13 +108,29 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
   };
 
   // Excluir credencial
-  const handleDeleteCredential = async (credential: CredentialPublic) => {
-    try {
-      await deleteCredential(credential.id);
-      Alert.alert('Sucesso', 'Credencial excluída com sucesso!');
-    } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Erro ao excluir credencial');
-    }
+  const handleDeleteCredential = (credential: CredentialPublic) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      `Tem certeza que deseja excluir a credencial "${credential.title}"?\n\nEsta ação não pode ser desfeita.`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteCredential(credential.id);
+              Alert.alert('Sucesso', 'Credencial excluída com sucesso!');
+            } catch (error: any) {
+              Alert.alert('Erro', error.message || 'Erro ao excluir credencial');
+            }
+          }
+        }
+      ]
+    );
   };
 
 

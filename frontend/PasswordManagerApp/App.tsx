@@ -10,6 +10,9 @@ import CredentialsScreen from './src/screens/CredentialsScreen';
 import NotesListScreen from './src/screens/NotesListScreen';
 import NoteEditorScreen from './src/screens/NoteEditorScreen';
 import MasterPasswordScreen from './src/screens/MasterPasswordScreen';
+import CloudBackupScreen from './src/screens/CloudBackupScreen';
+import BackupManagementScreen from './src/screens/BackupManagementScreen';
+import SimpleBackupScreen from './src/screens/SimpleBackupScreen';
 import { AppLockProvider } from './src/components/AppLockProvider';
 import { SettingsProvider } from './src/contexts/SettingsContext';
 import { AuthTokens, User } from './src/types/auth';
@@ -18,7 +21,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings' | 'credentials' | 'notes' | 'noteEditor' | 'masterPassword' | '2fa'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings' | 'credentials' | 'notes' | 'noteEditor' | 'masterPassword' | '2fa' | 'cloudBackup' | 'backupManagement' | 'simpleBackup'>('home');
   const [editingNote, setEditingNote] = useState<any>(null);
   const [pendingNoteAction, setPendingNoteAction] = useState<(() => void) | null>(null);
 
@@ -106,6 +109,18 @@ export default function App() {
     setCurrentScreen('settings');
   };
 
+  const handleNavigateToCloudBackup = () => {
+    setCurrentScreen('cloudBackup');
+  };
+
+  const handleNavigateToBackupManagement = () => {
+    setCurrentScreen('backupManagement');
+  };
+
+  const handleNavigateToSimpleBackup = () => {
+    setCurrentScreen('simpleBackup');
+  };
+
   const handle2FACancel = () => {
     setCurrentScreen('settings');
   };
@@ -145,6 +160,7 @@ export default function App() {
                 onNavigateToSettings={handleNavigateToSettings}
                 onNavigateToCredentials={handleNavigateToCredentials}
                 onNavigateToNotes={handleNavigateToNotes}
+                onNavigateToSimpleBackup={handleNavigateToSimpleBackup}
               />
             ) : currentScreen === 'settings' ? (
               <SettingsScreen 
@@ -201,6 +217,18 @@ export default function App() {
               <TwoFactorNavigator
                 onSuccess={handle2FASuccess}
                 onCancel={handle2FACancel}
+              />
+            ) : currentScreen === 'cloudBackup' ? (
+              <CloudBackupScreen
+                navigation={{ goBack: handleNavigateToHome }}
+              />
+            ) : currentScreen === 'backupManagement' ? (
+              <BackupManagementScreen
+                navigation={{ goBack: handleNavigateToHome }}
+              />
+            ) : currentScreen === 'simpleBackup' ? (
+              <SimpleBackupScreen
+                navigation={{ goBack: handleNavigateToHome }}
               />
             ) : (
               <CredentialsScreen 

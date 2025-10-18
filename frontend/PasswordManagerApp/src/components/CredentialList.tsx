@@ -10,6 +10,7 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { CredentialPublic, CredentialFilters } from '../types/credential';
 import { CredentialService } from '../services/credentialService';
 
@@ -104,8 +105,15 @@ const CredentialList: React.FC<CredentialListProps> = ({
           <Text style={styles.credentialTitle}>{item.title}</Text>
           {item.isFavorite && <Text style={styles.favoriteIcon}>⭐</Text>}
         </View>
-        <Text style={styles.credentialCategory}>{item.category}</Text>
+        <TouchableOpacity
+          onPress={() => confirmDelete(item)}
+          style={styles.actionButton}
+        >
+          <Ionicons name="trash-outline" size={20} color="#e74c3c" />
+        </TouchableOpacity>
       </View>
+
+      <Text style={styles.credentialCategory}>{item.category}</Text>
 
       {item.description && (
         <Text style={styles.credentialDescription} numberOfLines={2}>
@@ -373,22 +381,29 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  credentialActions: {
+    flexDirection: 'row',
+  },
+  actionButton: {
+    padding: 8,
+  },
   credentialHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 8,
+    width: '100%',
   },
   credentialTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    marginRight: 8,
   },
   credentialTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
-    flex: 1,
   },
   favoriteIcon: {
     fontSize: 16,
@@ -401,6 +416,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
   },
   credentialDescription: {
     fontSize: 14,

@@ -5,10 +5,12 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "dev": "nodemon",
+    "dev:watch": "nodemon --watch src --ext js,json --exec \"node src/server.js\"",
     "test": "jest",
     "migrate": "npx sequelize-cli db:migrate",
-    "seed": "npx sequelize-cli db:seed:all"
+    "seed": "npx sequelize-cli db:seed:all",
+    "db:reset": "npx sequelize-cli db:drop && npx sequelize-cli db:create && npx sequelize-cli db:migrate && npm run seed"
   },
   "keywords": [
     "password-manager",
@@ -26,8 +28,10 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "express-validator": "^7.0.1",
+    "googleapis": "^164.0.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "nodemailer": "^7.0.9",
     "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
@@ -40,7 +44,7 @@
   },
   "devDependencies": {
     "jest": "^29.7.0",
-    "nodemon": "^3.0.2",
+    "nodemon": "^3.1.10",
     "sequelize-cli": "^6.6.2",
     "supertest": "^6.3.3"
   },

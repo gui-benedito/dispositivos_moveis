@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ScrollView,
 } from 'react-native';
 
 interface HomeScreenProps {
@@ -12,6 +13,7 @@ interface HomeScreenProps {
   onNavigateToSettings: () => void;
   onNavigateToCredentials: () => void;
   onNavigateToNotes: () => void;
+  onNavigateToSimpleBackup: () => void;
   user: {
     firstName: string;
     lastName: string;
@@ -19,7 +21,7 @@ interface HomeScreenProps {
   };
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings, onNavigateToCredentials, onNavigateToNotes, user }) => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings, onNavigateToCredentials, onNavigateToNotes, onNavigateToSimpleBackup, user }) => {
   const handleLogout = () => {
     Alert.alert(
       'Logout',
@@ -41,7 +43,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings,
         <Text style={styles.email}>{user.email}</Text>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
         <Text style={styles.welcomeText}>
           Suas credenciais estão seguras e criptografadas.
         </Text>
@@ -64,14 +67,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings,
           <Text style={styles.notesButtonText}>📝 Notas Seguras</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.simpleBackupButton} onPress={onNavigateToSimpleBackup}>
+          <Text style={styles.simpleBackupButtonText}>💾 Backup em Nuvem</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.settingsButton} onPress={onNavigateToSettings}>
           <Text style={styles.settingsButtonText}>⚙️ Configurações</Text>
         </TouchableOpacity>
-      </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Sair</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Sair</Text>
+        </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -102,9 +110,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#ecf0f1',
   },
-  content: {
+  scrollContent: {
     flex: 1,
+  },
+  content: {
     padding: 20,
+    paddingBottom: 40,
   },
   welcomeText: {
     fontSize: 16,
@@ -159,9 +170,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  backupButton: {
+    backgroundColor: '#9b59b6',
+    marginTop: 15,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  backupButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  managementButton: {
+    backgroundColor: '#f39c12',
+    marginTop: 15,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  managementButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  simpleBackupButton: {
+    backgroundColor: '#27ae60',
+    marginTop: 15,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  simpleBackupButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   settingsButton: {
     backgroundColor: '#3498db',
-    marginTop: 10,
+    marginTop: 15,
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
@@ -173,7 +220,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: '#e74c3c',
-    margin: 20,
+    marginTop: 20,
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',

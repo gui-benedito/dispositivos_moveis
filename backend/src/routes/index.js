@@ -8,6 +8,10 @@ const credentialRoutes = require('./credentials');
 const settingsRoutes = require('./settings');
 const twoFactorRoutes = require('./twoFactor');
 const noteRoutes = require('./notes');
+const backupRoutes = require('./backup');
+const simpleBackupRoutes = require('./simpleBackup');
+const googleDriveRoutes = require('./googleDrive');
+const directGoogleDriveRoutes = require('./directGoogleDrive');
 
 // Configurar rotas
 router.use('/auth', authRoutes);
@@ -16,6 +20,10 @@ router.use('/credentials', credentialRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/2fa', twoFactorRoutes);
 router.use('/notes', noteRoutes);
+router.use('/backup', backupRoutes);
+router.use('/simple-backup', simpleBackupRoutes);
+router.use('/google-drive', googleDriveRoutes);
+router.use('/direct-google-drive', directGoogleDriveRoutes);
 
 /**
  * @swagger
@@ -99,6 +107,10 @@ router.get('/', (req, res) => {
       settings: '/api/settings',
       twoFactor: '/api/2fa',
       notes: '/api/notes',
+      backup: '/api/backup',
+      simpleBackup: '/api/simple-backup',
+      googleDrive: '/api/google-drive',
+      directGoogleDrive: '/api/direct-google-drive',
       health: '/api/health'
     }
   });
