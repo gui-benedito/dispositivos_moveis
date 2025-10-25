@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { User, Credential, Note } = require('../models');
+const { User, Credential, Note, CredentialVersion } = require('../models');
 
 class SimpleBackupService {
   /**
@@ -21,6 +21,10 @@ class SimpleBackupService {
       // Buscar credenciais (incluindo dados de criptografia)
       const credentials = await Credential.findAll({
         where: { userId, isActive: true }
+      });
+
+      const versions = await CredentialVersion.findAll({
+        where: { userId }
       });
 
       // Buscar notas
@@ -56,6 +60,24 @@ class SimpleBackupService {
           createdAt: cred.createdAt,
           updatedAt: cred.updatedAt
         })),
+        versions: versions.map(v => ({
+          id: v.id,
+          credentialId: v.credentialId,
+          version: v.version,
+          title: v.title,
+          description: v.description,
+          category: v.category,
+          isFavorite: v.isFavorite,
+          isActive: v.isActive,
+          username: v.encryptedUsername,
+          password: v.encryptedPassword,
+          notes: v.encryptedNotes,
+          encryptionKey: v.encryptionKey,
+          iv: v.iv,
+          salt: v.salt,
+          createdAt: v.createdAt,
+          updatedAt: v.updatedAt
+        })),
         notes: notes.map(note => ({
           id: note.id,
           title: note.title,
@@ -69,6 +91,7 @@ class SimpleBackupService {
         })),
         metadata: {
           totalCredentials: credentials.length,
+          totalVersions: versions.length,
           totalNotes: notes.length,
           backupSize: 0 // Será calculado após criptografia
         }
@@ -193,9 +216,10 @@ class SimpleBackupService {
 
       // Restaurar credenciais
       let restoredCredentials = 0;
+      const idMap = new Map();
       for (const credData of decryptedData.credentials) {
         try {
-          await Credential.create({
+          const created = await Credential.create({
             userId,
             title: credData.title,
             description: credData.description,
@@ -210,8 +234,40 @@ class SimpleBackupService {
             salt: credData.salt
           });
           restoredCredentials++;
+          if (credData.id) {
+            idMap.set(credData.id, created.id);
+          }
         } catch (error) {
           console.warn('⚠️ Erro ao restaurar credencial:', credData.title, error.message);
+        }
+      }
+
+      let restoredVersions = 0;
+      if (Array.isArray(decryptedData.versions) && decryptedData.versions.length > 0) {
+        const versionsToCreate = decryptedData.versions
+          .map(v => ({
+            credentialId: idMap.get(v.credentialId) || null,
+            userId,
+            version: v.version,
+            title: v.title,
+            description: v.description,
+            category: v.category,
+            isFavorite: v.isFavorite,
+            isActive: v.isActive,
+            encryptedUsername: v.username,
+            encryptedPassword: v.password,
+            encryptedNotes: v.notes,
+            encryptionKey: v.encryptionKey,
+            iv: v.iv,
+            salt: v.salt,
+            createdAt: v.createdAt,
+            updatedAt: v.updatedAt
+          }))
+          .filter(v => !!v.credentialId);
+
+        if (versionsToCreate.length > 0) {
+          await CredentialVersion.bulkCreate(versionsToCreate);
+          restoredVersions = versionsToCreate.length;
         }
       }
 
@@ -237,6 +293,7 @@ class SimpleBackupService {
       console.log('✅ Backup restaurado com sucesso');
       console.log('📊 Estatísticas:', {
         credentials: restoredCredentials,
+        versions: restoredVersions,
         notes: restoredNotes
       });
 
@@ -245,6 +302,7 @@ class SimpleBackupService {
         restoredCredentials,
         restoredNotes,
         totalCredentials: decryptedData.credentials.length,
+        totalVersions: Array.isArray(decryptedData.versions) ? decryptedData.versions.length : 0,
         totalNotes: decryptedData.notes.length
       };
 

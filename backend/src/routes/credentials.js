@@ -243,6 +243,17 @@ const analyzePasswordValidation = [
     .withMessage('Senha é obrigatória')
 ];
 
+// Versionamento
+const listVersionsValidation = [
+  param('id').isUUID().withMessage('ID deve ser um UUID válido'),
+];
+
+const restoreVersionValidation = [
+  param('id').isUUID().withMessage('ID deve ser um UUID válido'),
+  param('version').isInt({ min: 1 }).withMessage('Versão deve ser um inteiro >= 1'),
+  body('masterPassword').trim().isLength({ min: 1 }).withMessage('Senha mestre é obrigatória'),
+];
+
 // Rotas
 
 /**
@@ -275,5 +286,11 @@ router.post('/generate-password', generatePasswordValidation, CredentialControll
 
 // POST /api/credentials/analyze-password - Analisar força da senha
 router.post('/analyze-password', analyzePasswordValidation, CredentialController.analyzePassword);
+
+// GET /api/credentials/:id/versions - Listar versões
+router.get('/:id/versions', listVersionsValidation, CredentialController.listVersions);
+
+// POST /api/credentials/:id/versions/:version/restore - Restaurar versão
+router.post('/:id/versions/:version/restore', restoreVersionValidation, CredentialController.restoreVersion);
 
 module.exports = router;

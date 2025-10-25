@@ -1,4 +1,4 @@
-const { User, Credential, Note, TwoFactorAuth } = require('../models');
+const { User, Credential, Note, TwoFactorAuth, CredentialVersion } = require('../models');
 const BackupCryptoService = require('./backupCryptoService');
 const CloudProviderService = require('./cloudProviderService');
 
@@ -15,6 +15,7 @@ class BackupService {
       const userData = await this._collectUserData(userId);
       console.log('📊 Dados coletados:', {
         credentials: userData.credentials.length,
+        credentialVersions: userData.credentialVersions ? userData.credentialVersions.length : 0,
         notes: userData.notes.length,
         twoFactor: userData.twoFactor ? 'Configurado' : 'Não configurado'
       });
@@ -40,6 +41,7 @@ class BackupService {
         encryptionKey: encryptedKey.encrypted,
         metadata: {
           credentialsCount: userData.credentials.length,
+          credentialVersionsCount: userData.credentialVersions ? userData.credentialVersions.length : 0,
           notesCount: userData.notes.length,
           hasTwoFactor: !!userData.twoFactor,
           backupVersion: 1
@@ -129,6 +131,11 @@ class BackupService {
       // 5. Descriptografar dados
       const userData = await BackupCryptoService.decryptBackupData(backupData.data, encryptionKey);
       console.log('🔐 Dados descriptografados');
+      console.log('📦 Conteúdo do backup:', {
+        credentials: userData.credentials ? userData.credentials.length : 0,
+        credentialVersions: userData.credentialVersions ? userData.credentialVersions.length : 0,
+        notes: userData.notes ? userData.notes.length : 0,
+      });
 
       // 6. Restaurar dados no banco
       await this._restoreUserData(userId, userData);
@@ -157,10 +164,26 @@ class BackupService {
    * Coletar todos os dados do usuário
    */
   async _collectUserData(userId) {
-    const [credentials, notes, twoFactor] = await Promise.all([
+    const [credentials, credentialVersions, notes, twoFactor] = await Promise.all([
       Credential.findAll({
         where: { userId },
-        attributes: ['id', 'title', 'username', 'password', 'url', 'category', 'notes', 'isFavorite', 'createdAt', 'updatedAt']
+        attributes: [
+          'id', 'userId', 'title', 'description', 'category',
+          'encryptedUsername', 'encryptedPassword', 'encryptedNotes',
+          'encryptionKey', 'iv', 'salt',
+          'isFavorite', 'isActive', 'accessCount', 'lastAccessed',
+          'createdAt', 'updatedAt'
+        ]
+      }),
+      CredentialVersion.findAll({
+        where: { userId },
+        attributes: [
+          'id', 'credentialId', 'userId', 'version',
+          'title', 'description', 'category', 'isFavorite', 'isActive',
+          'encryptedUsername', 'encryptedPassword', 'encryptedNotes',
+          'encryptionKey', 'iv', 'salt',
+          'createdAt', 'updatedAt'
+        ]
       }),
       Note.findAll({
         where: { userId },
@@ -174,6 +197,7 @@ class BackupService {
 
     return {
       credentials: credentials.map(c => c.toJSON()),
+      credentialVersions: credentialVersions.map(v => v.toJSON()),
       notes: notes.map(n => n.toJSON()),
       twoFactor: twoFactor ? twoFactor.toJSON() : null
     };
@@ -185,18 +209,38 @@ class BackupService {
   async _restoreUserData(userId, userData) {
     // Limpar dados existentes (opcional - pode ser configurável)
     await Promise.all([
+      CredentialVersion.destroy({ where: { userId } }),
       Credential.destroy({ where: { userId } }),
       Note.destroy({ where: { userId } })
     ]);
 
-    // Restaurar credenciais
+    // Restaurar credenciais com mapeamento de IDs antigos -> novos
+    const idMap = new Map();
     if (userData.credentials && userData.credentials.length > 0) {
-      const credentialsToCreate = userData.credentials.map(cred => ({
-        ...cred,
-        userId,
-        id: undefined // Deixar o banco gerar novos IDs
-      }));
-      await Credential.bulkCreate(credentialsToCreate);
+      for (const cred of userData.credentials) {
+        const { id: oldId, ...rest } = cred;
+        const created = await Credential.create({
+          ...rest,
+          userId
+        });
+        idMap.set(oldId, created.id);
+      }
+    }
+
+    // Restaurar versões de credenciais (referenciando novos IDs)
+    if (userData.credentialVersions && userData.credentialVersions.length > 0) {
+      const versionsToCreate = userData.credentialVersions
+        .map(v => ({
+          ...v,
+          credentialId: idMap.get(v.credentialId) || null,
+          userId,
+          id: undefined
+        }))
+        .filter(v => !!v.credentialId);
+
+      if (versionsToCreate.length > 0) {
+        await CredentialVersion.bulkCreate(versionsToCreate);
+      }
     }
 
     // Restaurar notas

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
 import {
   View,
   Text,
@@ -13,12 +14,15 @@ import {
 import { useCredentials } from '../hooks/useCredentials';
 import CredentialList from '../components/CredentialList';
 import CredentialForm from '../components/CredentialForm';
+import { CredentialService } from '../services/credentialService';
+
 import {
   CredentialPublic,
   CreateCredentialRequest,
   UpdateCredentialRequest,
   CredentialFilters,
-  Credential as CredentialDetail
+  Credential as CredentialDetail,
+  CredentialVersionItem
 } from '../types/credential';
 
 interface CredentialsScreenProps {
@@ -48,6 +52,14 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
   const [showCredentialModal, setShowCredentialModal] = useState(false);
   const [masterPassword, setMasterPassword] = useState('');
   const [showMasterPasswordInput, setShowMasterPasswordInput] = useState(false);
+  const [isEditFlow, setIsEditFlow] = useState(false);
+  const [editInitialData, setEditInitialData] = useState<Partial<CreateCredentialRequest> | undefined>(undefined);
+  const [showVersionsModal, setShowVersionsModal] = useState(false);
+  const [versions, setVersions] = useState<CredentialVersionItem[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [versionsError, setVersionsError] = useState<string | null>(null);
+  const [restoreMasterPassword, setRestoreMasterPassword] = useState('');
+  const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
 
   // Abrir formulário para nova credencial
   const handleCreateCredential = () => {
@@ -55,10 +67,27 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
     setShowForm(true);
   };
 
+  // Abrir histórico direto da lista
+  const handleOpenHistory = async (credential: CredentialPublic) => {
+    setViewingCredential(credential);
+    try {
+      setVersionsLoading(true);
+      setVersionsError(null);
+      const res = await CredentialService.listVersions(credential.id);
+      if (res.success) setVersions(res.data);
+      setShowVersionsModal(true);
+    } catch (e: any) {
+      Alert.alert('Erro', e.message || 'Erro ao carregar versões');
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
+
   // Abrir formulário para editar credencial
   const handleEditCredential = (credential: CredentialPublic) => {
     setEditingCredential(credential);
-    setShowForm(true);
+    setIsEditFlow(true);
+    setShowMasterPasswordInput(true);
   };
 
   // Visualizar credencial
@@ -72,6 +101,33 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
     if (!masterPassword.trim()) {
       Alert.alert('Erro', 'Digite sua senha mestre');
       return;
+    }
+
+    // Se for fluxo de edição
+    if (isEditFlow && editingCredential) {
+      try {
+        const credential = await getCredential(editingCredential.id, masterPassword);
+        // Preencher dados para edição
+        setEditInitialData({
+          title: editingCredential.title,
+          description: editingCredential.description,
+          category: editingCredential.category,
+          isFavorite: editingCredential.isFavorite,
+          username: credential.username,
+          password: credential.password,
+          notes: credential.notes,
+        } as Partial<CreateCredentialRequest>);
+        setShowMasterPasswordInput(false);
+        setShowForm(true);
+        setMasterPassword('');
+        setIsEditFlow(false);
+        return;
+      } catch (error: any) {
+        Alert.alert('Erro', error.message || 'Erro ao obter credencial');
+        setMasterPassword('');
+        setIsEditFlow(false);
+        return;
+      }
     }
 
     if (!viewingCredential) return;
@@ -132,7 +188,6 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
       ]
     );
   };
-
 
   // Aplicar filtros
   const handleApplyFilters = (newFilters: CredentialFilters) => {
@@ -263,6 +318,7 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
                 setViewingCredential(null);
                 setDecryptedCredential(null);
                 setMasterPassword('');
+                setIsEditFlow(false);
               }}
             >
               <Text style={styles.passwordModalButtonText}>Cancelar</Text>
@@ -308,6 +364,7 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
         loading={loading}
         onCredentialPress={handleViewCredential}
         onEditCredential={handleEditCredential}
+        onOpenHistory={handleOpenHistory}
         onDeleteCredential={handleDeleteCredential}
         onRefresh={loadCredentials}
         filters={filters}
@@ -321,19 +378,21 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
         presentationStyle="pageSheet"
       >
         <CredentialForm
-          initialData={editingCredential ? {
+          initialData={editingCredential ? (editInitialData || {
             title: editingCredential.title,
             description: editingCredential.description,
             category: editingCredential.category,
             isFavorite: editingCredential.isFavorite
-          } : undefined}
+          }) : undefined}
           onSave={handleSaveCredential}
           onCancel={() => {
             setShowForm(false);
             setEditingCredential(null);
+            setEditInitialData(undefined);
           }}
           loading={loading}
           title={editingCredential ? 'Editar Credencial' : 'Nova Credencial'}
+          isEdit={!!editingCredential}
         />
       </Modal>
 
@@ -342,6 +401,101 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
 
       {/* Modal de visualização da credencial */}
       {renderCredentialModal()}
+
+      {/* Modal de versões (timeline) */}
+      <Modal
+        visible={showVersionsModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowVersionsModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Histórico de Versões</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowVersionsModal(false)}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalContent}>
+            {versionsLoading && (
+              <ActivityIndicator style={{ margin: 20 }} />
+            )}
+            {versionsError && (
+              <Text style={[styles.errorText, { margin: 16 }]}>{versionsError}</Text>
+            )}
+            {!versionsLoading && versions.length === 0 && (
+              <Text style={{ margin: 16, color: '#666' }}>Nenhuma versão encontrada.</Text>
+            )}
+            {!versionsLoading && versions.length > 0 && (
+              <ScrollView contentContainerStyle={styles.modalContentContainer}>
+                {versions.map(v => (
+                  <View key={v.id} style={styles.versionItem}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.versionTitle}>Versão {v.version} • {new Date(v.createdAt).toLocaleString('pt-BR')}</Text>
+                      <Text style={styles.versionMeta}>Título: {v.title} • Categoria: {v.category} {v.isFavorite ? '• ⭐' : ''}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.modalButtonPrimary]}
+                      onPress={() => {
+                        setSelectedVersion(v.version);
+                      }}
+                    >
+                      <Text style={styles.modalButtonPrimaryText}>Restaurar</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                {selectedVersion !== null && (
+                  <View style={styles.restoreBox}>
+                    <Text style={styles.fieldLabel}>Senha Mestre</Text>
+                    <TextInput
+                      style={styles.passwordInput}
+                      value={restoreMasterPassword}
+                      onChangeText={setRestoreMasterPassword}
+                      placeholder="Informe sua senha mestre"
+                      secureTextEntry
+                    />
+                    <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
+                      <TouchableOpacity
+                        style={[styles.modalButton, { flex: 1 }]}
+                        onPress={() => { setSelectedVersion(null); setRestoreMasterPassword(''); }}
+                      >
+                        <Text style={styles.modalButtonText}>Cancelar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.modalButton, styles.modalButtonPrimary, { flex: 1 }]}
+                        onPress={async () => {
+                          if (!viewingCredential || !selectedVersion) return;
+                          if (!restoreMasterPassword.trim()) {
+                            Alert.alert('Erro', 'Informe a senha mestre');
+                            return;
+                          }
+                          try {
+                            const res = await CredentialService.restoreVersion(viewingCredential.id, selectedVersion, restoreMasterPassword);
+                            if (res.success) {
+                              Alert.alert('Sucesso', 'Versão restaurada com sucesso');
+                              setRestoreMasterPassword('');
+                              setSelectedVersion(null);
+                              setShowVersionsModal(false);
+                              // Recarregar lista
+                              await loadCredentials();
+                            }
+                          } catch (e: any) {
+                            Alert.alert('Erro', e.message || 'Falha ao restaurar versão');
+                          }
+                        }}
+                      >
+                        <Text style={styles.modalButtonPrimaryText}>Confirmar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
 
       {/* Indicador de erro */}
       {error && (
@@ -478,6 +632,39 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#3498db',
+    marginLeft: 10,
+  },
+  modalButtonPrimaryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  versionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  versionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  versionMeta: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  restoreBox: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
   },
   passwordModalOverlay: {
     flex: 1,

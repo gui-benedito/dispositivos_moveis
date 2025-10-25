@@ -1,4 +1,4 @@
-const { Credential, User } = require('../models');
+const { Credential, User, CredentialVersion } = require('../models');
 const cryptoService = require('../services/cryptoService');
 const { validationResult } = require('express-validator');
 
@@ -386,6 +386,28 @@ class CredentialController {
         ...encryptedData
       });
 
+      // Registrar versão 1
+      try {
+        await CredentialVersion.create({
+          credentialId: credential.id,
+          userId,
+          version: 1,
+          title: credential.title,
+          description: credential.description,
+          category: credential.category,
+          isFavorite: credential.isFavorite,
+          isActive: credential.isActive,
+          encryptedUsername: credential.encryptedUsername,
+          encryptedPassword: credential.encryptedPassword,
+          encryptedNotes: credential.encryptedNotes,
+          encryptionKey: credential.encryptionKey,
+          iv: credential.iv,
+          salt: credential.salt
+        });
+      } catch (e) {
+        console.error('Erro ao registrar versão inicial da credencial:', e);
+      }
+
       res.status(201).json({
         success: true,
         message: 'Credencial criada com sucesso',
@@ -561,6 +583,30 @@ class CredentialController {
       // Atualizar credencial
       await credential.update(updateData);
 
+      // Registrar nova versão (snapshot pós-atualização)
+      try {
+        const versionCount = await CredentialVersion.count({ where: { credentialId: credential.id } });
+        const nextVersion = versionCount + 1;
+        await CredentialVersion.create({
+          credentialId: credential.id,
+          userId,
+          version: nextVersion,
+          title: credential.title,
+          description: credential.description,
+          category: credential.category,
+          isFavorite: credential.isFavorite,
+          isActive: credential.isActive,
+          encryptedUsername: credential.encryptedUsername,
+          encryptedPassword: credential.encryptedPassword,
+          encryptedNotes: credential.encryptedNotes,
+          encryptionKey: credential.encryptionKey,
+          iv: credential.iv,
+          salt: credential.salt
+        });
+      } catch (e) {
+        console.error('Erro ao registrar versão da credencial (update):', e);
+      }
+
       res.json({
         success: true,
         message: 'Credencial atualizada com sucesso',
@@ -644,6 +690,30 @@ class CredentialController {
 
       // Soft delete
       await credential.update({ isActive: false });
+
+      // Registrar versão pós-exclusão lógica
+      try {
+        const versionCount = await CredentialVersion.count({ where: { credentialId: credential.id } });
+        const nextVersion = versionCount + 1;
+        await CredentialVersion.create({
+          credentialId: credential.id,
+          userId,
+          version: nextVersion,
+          title: credential.title,
+          description: credential.description,
+          category: credential.category,
+          isFavorite: credential.isFavorite,
+          isActive: credential.isActive,
+          encryptedUsername: credential.encryptedUsername,
+          encryptedPassword: credential.encryptedPassword,
+          encryptedNotes: credential.encryptedNotes,
+          encryptionKey: credential.encryptionKey,
+          iv: credential.iv,
+          salt: credential.salt
+        });
+      } catch (e) {
+        console.error('Erro ao registrar versão da credencial (delete):', e);
+      }
 
       res.json({
         success: true,
@@ -910,6 +980,81 @@ class CredentialController {
         message: 'Erro interno do servidor',
         code: 'INTERNAL_ERROR'
       });
+    }
+  }
+
+  /**
+   * Lista versões de uma credencial
+   */
+  static async listVersions(req, res) {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params; // credential id
+
+      const versions = await CredentialVersion.findAll({
+        where: { credentialId: id, userId },
+        order: [['version', 'DESC']],
+        attributes: ['id', 'version', 'title', 'description', 'category', 'isFavorite', 'isActive', 'createdAt']
+      });
+
+      return res.json({ success: true, data: versions });
+    } catch (error) {
+      console.error('Erro ao listar versões:', error);
+      res.status(500).json({ success: false, message: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
+    }
+  }
+
+  /**
+   * Restaurar uma versão específica
+   */
+  static async restoreVersion(req, res) {
+    try {
+      const userId = req.user.id;
+      const { id, version } = req.params; // credential id e version number
+      const { masterPassword } = req.body;
+
+      if (!masterPassword) {
+        return res.status(400).json({ success: false, message: 'Senha mestre é obrigatória', code: 'MASTER_PASSWORD_REQUIRED' });
+      }
+
+      const credential = await Credential.findOne({ where: { id, userId } });
+      if (!credential) {
+        return res.status(404).json({ success: false, message: 'Credencial não encontrada', code: 'CREDENTIAL_NOT_FOUND' });
+      }
+
+      const snapshot = await CredentialVersion.findOne({ where: { credentialId: id, userId, version: parseInt(version, 10) } });
+      if (!snapshot) {
+        return res.status(404).json({ success: false, message: 'Versão não encontrada', code: 'VERSION_NOT_FOUND' });
+      }
+
+      // Validar senha mestre com snapshot
+      const isValidPassword = await cryptoService.verifyMasterPassword(masterPassword, snapshot.encryptionKey, snapshot.salt);
+      if (!isValidPassword) {
+        return res.status(401).json({ success: false, message: 'Senha mestre incorreta', code: 'INVALID_MASTER_PASSWORD' });
+      }
+
+      // Descriptografar dados do snapshot e recriptografar (pode ser com a mesma senha mestre)
+      const decrypted = await cryptoService.decryptCredential(snapshot, masterPassword);
+      const reEncrypted = await cryptoService.encryptCredential({
+        username: decrypted.username,
+        password: decrypted.password,
+        notes: decrypted.notes
+      }, masterPassword);
+
+      // Atualizar credencial com metadados e dados criptografados do snapshot
+      await credential.update({
+        title: snapshot.title,
+        description: snapshot.description,
+        category: snapshot.category,
+        isFavorite: snapshot.isFavorite,
+        isActive: snapshot.isActive,
+        ...reEncrypted
+      });
+
+      return res.json({ success: true, message: 'Versão restaurada com sucesso' });
+    } catch (error) {
+      console.error('Erro ao restaurar versão:', error);
+      res.status(500).json({ success: false, message: 'Erro interno do servidor', code: 'INTERNAL_ERROR' });
     }
   }
 }

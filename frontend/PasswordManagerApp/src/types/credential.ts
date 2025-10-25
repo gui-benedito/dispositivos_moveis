@@ -150,6 +150,28 @@ export interface CategoriesResponse {
   data: string[];
 }
 
+// Versionamento de credenciais
+export interface CredentialVersionItem {
+  id: string;
+  version: number;
+  title: string;
+  description?: string;
+  category: string;
+  isFavorite: boolean;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CredentialVersionsResponse {
+  success: boolean;
+  data: CredentialVersionItem[];
+}
+
+export interface RestoreVersionResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface GeneratePasswordApiResponse {
   success: boolean;
   data: GeneratePasswordResponse;

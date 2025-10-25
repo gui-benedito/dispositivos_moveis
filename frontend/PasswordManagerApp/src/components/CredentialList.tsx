@@ -19,6 +19,7 @@ interface CredentialListProps {
   loading: boolean;
   onCredentialPress: (credential: CredentialPublic) => void;
   onEditCredential: (credential: CredentialPublic) => void;
+  onOpenHistory: (credential: CredentialPublic) => void;
   onDeleteCredential: (credential: CredentialPublic) => void;
   onRefresh: () => void;
   filters?: CredentialFilters;
@@ -31,6 +32,7 @@ const CredentialList: React.FC<CredentialListProps> = ({
   onCredentialPress,
   onEditCredential,
   onDeleteCredential,
+  onOpenHistory,
   onRefresh,
   filters = {},
   onFiltersChange
@@ -105,12 +107,26 @@ const CredentialList: React.FC<CredentialListProps> = ({
           <Text style={styles.credentialTitle}>{item.title}</Text>
           {item.isFavorite && <Text style={styles.favoriteIcon}>⭐</Text>}
         </View>
-        <TouchableOpacity
-          onPress={() => confirmDelete(item)}
-          style={styles.actionButton}
-        >
-          <Ionicons name="trash-outline" size={20} color="#e74c3c" />
-        </TouchableOpacity>
+        <View style={styles.actionsRight}>
+          <TouchableOpacity
+            onPress={() => onEditCredential(item)}
+            style={styles.actionButton}
+          >
+            <Ionicons name="pencil-outline" size={20} color="#3498db" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => onOpenHistory(item)}
+            style={styles.actionButton}
+          >
+            <Ionicons name="time-outline" size={20} color="#8e44ad" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => confirmDelete(item)}
+            style={styles.actionButton}
+          >
+            <Ionicons name="trash-outline" size={20} color="#e74c3c" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Text style={styles.credentialCategory}>{item.category}</Text>
@@ -393,6 +409,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 8,
     width: '100%',
+  },
+  actionsRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   credentialTitleContainer: {
     flexDirection: 'row',

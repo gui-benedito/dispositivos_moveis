@@ -28,6 +28,7 @@ interface CredentialFormProps {
   onCancel: () => void;
   loading?: boolean;
   title?: string;
+  isEdit?: boolean;
 }
 
 const CredentialForm: React.FC<CredentialFormProps> = ({
@@ -35,7 +36,8 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
   onSave,
   onCancel,
   loading = false,
-  title = 'Nova Credencial'
+  title = 'Nova Credencial',
+  isEdit = false
 }) => {
   const {
     formData,
@@ -46,7 +48,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
     touchField,
     validateForm,
     resetForm
-  } = useCredentialForm(initialData);
+  } = useCredentialForm(initialData, { requirePassword: !isEdit });
 
   const {
     generatedPassword,
@@ -76,7 +78,27 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
     }
 
     try {
-      await onSave(formData);
+      // Montar payload: em edição, enviar apenas campos definidos/alterados; senha pode ser omitida
+      let payload: CreateCredentialRequest | UpdateCredentialRequest;
+      if (isEdit) {
+        const updateData: UpdateCredentialRequest = {
+          masterPassword: formData.masterPassword
+        } as UpdateCredentialRequest;
+
+        if (formData.title?.trim()) updateData.title = formData.title.trim();
+        if (formData.description !== undefined) updateData.description = formData.description;
+        if (formData.category?.trim()) updateData.category = formData.category.trim();
+        if (formData.username && formData.username.length > 0) updateData.username = formData.username;
+        if (formData.password && formData.password.length > 0) updateData.password = formData.password;
+        if (formData.notes !== undefined) updateData.notes = formData.notes;
+        if (typeof formData.isFavorite === 'boolean') updateData.isFavorite = formData.isFavorite;
+
+        payload = updateData;
+      } else {
+        payload = formData as CreateCredentialRequest;
+      }
+
+      await onSave(payload);
       resetForm();
     } catch (error: any) {
       Alert.alert('Erro', error.message || 'Erro ao salvar credencial');

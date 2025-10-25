@@ -246,7 +246,10 @@ export const usePasswordGenerator = () => {
   };
 };
 
-export const useCredentialForm = (initialData?: Partial<CreateCredentialRequest>) => {
+export const useCredentialForm = (
+  initialData?: Partial<CreateCredentialRequest>,
+  options?: { requirePassword?: boolean }
+) => {
   const [formData, setFormData] = useState<CreateCredentialRequest>({
     title: '',
     description: '',
@@ -318,9 +321,10 @@ export const useCredentialForm = (initialData?: Partial<CreateCredentialRequest>
   }, [initialData]);
 
   // Verificar se formulário é válido
+  const requirePassword = options?.requirePassword !== undefined ? options.requirePassword : true;
   const isValid = Object.keys(errors).length === 0 && 
     formData.title.trim() !== '' && 
-    formData.password.trim() !== '' && 
+    (requirePassword ? formData.password.trim() !== '' : true) && 
     formData.masterPassword.trim() !== '';
 
   return {

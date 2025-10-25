@@ -7,6 +7,7 @@ const TwoFactorAuth = require('./TwoFactorAuth');
 const VerificationCode = require('./VerificationCode');
 const Note = require('./Note');
 const Backup = require('./Backup');
+const CredentialVersion = require('./CredentialVersion');
 
 // Associações entre modelos
 User.hasMany(BiometricSession, { foreignKey: 'userId', as: 'biometricSessions' });
@@ -14,6 +15,12 @@ BiometricSession.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(Credential, { foreignKey: 'userId', as: 'credentials' });
 Credential.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Versionamento de credenciais
+Credential.hasMany(CredentialVersion, { foreignKey: 'credentialId', as: 'versions' });
+CredentialVersion.belongsTo(Credential, { foreignKey: 'credentialId', as: 'credential' });
+User.hasMany(CredentialVersion, { foreignKey: 'userId', as: 'credentialVersions' });
+CredentialVersion.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasOne(UserSettings, { foreignKey: 'userId', as: 'settings' });
 UserSettings.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -61,6 +68,7 @@ module.exports = {
   User,
   BiometricSession,
   Credential,
+  CredentialVersion,
   UserSettings,
   TwoFactorAuth,
   VerificationCode,

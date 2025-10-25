@@ -19,6 +19,10 @@ import {
   AnalyzePasswordRequest,
   AnalyzePasswordApiResponse
 } from '../types/credential';
+import {
+  CredentialVersionsResponse,
+  RestoreVersionResponse
+} from '../types/credential';
 
 // Configuração da API - detecta ambiente e usa URL apropriada
 const getApiBaseUrl = () => {
@@ -252,6 +256,32 @@ export class CredentialService {
       return response.data;
     } catch (error: any) {
       console.error('Erro ao analisar senha:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Lista versões de uma credencial
+   */
+  static async listVersions(id: string): Promise<CredentialVersionsResponse> {
+    try {
+      const response = await api.get<CredentialVersionsResponse>(`/credentials/${id}/versions`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Erro ao listar versões:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Restaura uma versão específica
+   */
+  static async restoreVersion(id: string, version: number, masterPassword: string): Promise<RestoreVersionResponse> {
+    try {
+      const response = await api.post<RestoreVersionResponse>(`/credentials/${id}/versions/${version}/restore`, { masterPassword });
+      return response.data;
+    } catch (error: any) {
+      console.error('Erro ao restaurar versão:', error);
       throw error.response?.data || error;
     }
   }
