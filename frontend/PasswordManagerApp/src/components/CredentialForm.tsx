@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,13 @@ import {
   Switch,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import { useCredentialForm, usePasswordGenerator } from '../hooks/useCredentials';
+import { Ionicons } from '@expo/vector-icons';
 import { CredentialService } from '../services/credentialService';
+import { CategoryService } from '../services/categoryService';
+import { Category, CreateCategoryRequest, UpdateCategoryRequest } from '../types/category';
 import {
   CreateCredentialRequest,
   UpdateCredentialRequest,
@@ -29,6 +33,8 @@ interface CredentialFormProps {
   loading?: boolean;
   title?: string;
   isEdit?: boolean;
+  categories?: string[];
+  onReloadCategories?: () => void;
 }
 
 const CredentialForm: React.FC<CredentialFormProps> = ({
@@ -37,7 +43,9 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
   onCancel,
   loading = false,
   title = 'Nova Credencial',
-  isEdit = false
+  isEdit = false,
+  categories,
+  onReloadCategories
 }) => {
   const {
     formData,
@@ -62,6 +70,18 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showMasterPassword, setShowMasterPassword] = useState(false);
   const [showPasswordGenerator, setShowPasswordGenerator] = useState(false);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [showCategorySelect, setShowCategorySelect] = useState(false);
+  const [userCategories, setUserCategories] = useState<Category[]>([]);
+  const [catLoading, setCatLoading] = useState(false);
+  const [catError, setCatError] = useState<string | null>(null);
+
+  const ICONS: string[] = [
+    'briefcase-outline', 'mail-outline', 'logo-github', 'logo-google',
+    'key-outline', 'lock-closed-outline', 'cash-outline',
+    'game-controller-outline', 'airplane-outline'
+  ];
+  const COLORS: string[] = ['#3498db', '#e74c3c', '#27ae60', '#8e44ad', '#f1c40f', '#2ecc71', '#e67e22', '#1abc9c'];
   const [generatorOptions, setGeneratorOptions] = useState({
     length: 16,
     includeUppercase: true,
@@ -141,6 +161,56 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
     return PASSWORD_STRENGTH_ICONS[passwordStrength.strength] || '⚪';
   };
 
+  // Carregar categorias do usuário
+  const loadUserCategories = async () => {
+    try {
+      setCatLoading(true);
+      setCatError(null);
+      const res = await CategoryService.list();
+      if (res.success) setUserCategories(res.data);
+    } catch (e: any) {
+      setCatError(e.message || 'Erro ao carregar categorias');
+    } finally {
+      setCatLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUserCategories();
+  }, []);
+
+  const handleCreateCategory = async (payload: CreateCategoryRequest) => {
+    try {
+      await CategoryService.create(payload);
+      await loadUserCategories();
+      onReloadCategories?.();
+    } catch (e: any) {
+      Alert.alert('Erro', e.message || 'Falha ao criar categoria');
+    }
+  };
+
+  const handleUpdateCategory = async (id: string, payload: UpdateCategoryRequest) => {
+    try {
+      await CategoryService.update(id, payload);
+      await loadUserCategories();
+      if (payload.cascadeUpdate && payload.name) {
+        onReloadCategories?.();
+      }
+    } catch (e: any) {
+      Alert.alert('Erro', e.message || 'Falha ao atualizar categoria');
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      await CategoryService.remove(id);
+      await loadUserCategories();
+      onReloadCategories?.();
+    } catch (e: any) {
+      Alert.alert('Erro', e.message || 'Falha ao excluir categoria');
+    }
+  };
+
   return (
     <KeyboardAvoidingView 
       style={styles.container} 
@@ -189,16 +259,62 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
           {/* Categoria */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Categoria *</Text>
-            <TextInput
-              style={[styles.input, errors.category && styles.inputError]}
-              value={formData.category}
-              onChangeText={(value) => updateField('category', value)}
-              onBlur={() => touchField('category')}
-              placeholder="Ex: Redes Sociais, E-mail..."
-              editable={!loading}
-            />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity
+                style={[styles.input, { flex: 1, justifyContent: 'center' }, errors.category && styles.inputError]}
+                onPress={() => setShowCategorySelect(true)}
+                disabled={loading}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {(() => {
+                    const meta = userCategories.find(c => c.name === formData.category);
+                    return (
+                      <>
+                        {meta?.icon ? (
+                          <Ionicons name={meta.icon as any} size={16} color={meta?.color || '#555'} style={{ marginRight: 6 }} />
+                        ) : null}
+                        <Text style={{ color: formData.category ? '#333' : '#999' }}>
+                          {formData.category || 'Selecionar categoria cadastrada'}
+                        </Text>
+                      </>
+                    );
+                  })()}
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.generateButton, { marginLeft: 8 }]}
+                onPress={() => setShowCategoryManager(true)}
+              >
+                <Text style={styles.generateButtonText}>⚙️</Text>
+              </TouchableOpacity>
+            </View>
             {errors.category && touched.category && (
               <Text style={styles.errorText}>{errors.category}</Text>
+            )}
+            {!!categories && categories.length > 0 && (
+              <Text style={{ marginTop: 6, color: '#888', fontSize: 12 }}>
+                {`Você tem ${categories.length} categorias cadastradas`}
+              </Text>
+            )}
+            {userCategories.length > 0 && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+                {userCategories.slice(0, 6).map((c) => (
+                  <TouchableOpacity
+                    key={c.id}
+                    style={{
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      borderRadius: 16,
+                      backgroundColor: '#ecf0f1',
+                      marginRight: 8,
+                      marginBottom: 8
+                    }}
+                    onPress={() => updateField('category', c.name)}
+                  >
+                    <Text style={{ color: '#333' }}>{c.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             )}
           </View>
 
@@ -462,7 +578,171 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
           </View>
         </View>
       </ScrollView>
+
+      {/* Category Manager Modal */}
+      <Modal
+        visible={showCategoryManager}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowCategoryManager(false)}
+      >
+        <View style={styles.categoryModalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Gerenciar Categorias</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowCategoryManager(false)}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.modalContentContainer}>
+            {catLoading && <ActivityIndicator style={{ margin: 16 }} />}
+            {catError && <Text style={[styles.errorText, { margin: 16 }]}>{catError}</Text>}
+
+            {/* Criar nova categoria */}
+            <CategoryCreate
+              onCreate={handleCreateCategory}
+              icons={ICONS}
+              colors={COLORS}
+            />
+
+            {/* Lista de categorias */}
+            <View style={{ marginTop: 16 }}>
+              {userCategories.map((c) => (
+                <CategoryRow
+                  key={c.id}
+                  category={c}
+                  icons={ICONS}
+                  colors={COLORS}
+                  onUpdate={(payload) => handleUpdateCategory(c.id, payload)}
+                  onDelete={() => handleDeleteCategory(c.id)}
+                />
+              ))}
+              {userCategories.length === 0 && !catLoading && (
+                <Text style={{ color: '#666' }}>Nenhuma categoria criada ainda.</Text>
+              )}
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Category Select Modal */}
+      <Modal
+        visible={showCategorySelect}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowCategorySelect(false)}
+      >
+        <View style={styles.categoryModalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Selecionar Categoria</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowCategorySelect(false)}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.modalContentContainer}>
+            {userCategories.map((c) => (
+              <TouchableOpacity
+                key={c.id}
+                style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}
+                onPress={() => { updateField('category', c.name); setShowCategorySelect(false); }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {c.icon ? <Ionicons name={c.icon as any} size={18} color={c.color || '#555'} style={{ marginRight: 8 }} /> : null}
+                  <Text style={{ fontSize: 16 }}>{c.name}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+            {userCategories.length === 0 && (
+              <Text style={{ color: '#666' }}>Nenhuma categoria cadastrada.</Text>
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
+  );
+};
+
+// Componentes auxiliares (inline para simplicidade)
+const CategoryCreate: React.FC<{ onCreate: (p: CreateCategoryRequest) => void; icons: string[]; colors: string[]; }> = ({ onCreate, icons, colors }) => {
+  const [name, setName] = useState('');
+  const [icon, setIcon] = useState<string | undefined>(undefined);
+  const [color, setColor] = useState<string | undefined>(undefined);
+  return (
+    <View style={{ backgroundColor: '#f8f9fa', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#e9ecef' }}>
+      <Text style={{ fontSize: 16, fontWeight: '600', marginBottom: 8 }}>Nova categoria</Text>
+      <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nome" />
+      <TextInput style={[styles.input, { marginTop: 8 }]} value={color} onChangeText={setColor} placeholder="Cor (ex: #3498db)" />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+        {colors.map((col: string) => (
+          <TouchableOpacity key={col} onPress={() => setColor(col)} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: col, marginRight: 8, marginBottom: 8, borderWidth: 2, borderColor: color === col ? '#333' : 'transparent' }} />
+        ))}
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+        {colors.map((col: string) => (
+          <TouchableOpacity key={col} onPress={() => setColor(col)} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: col, marginRight: 8, marginBottom: 8, borderWidth: 2, borderColor: color === col ? '#333' : 'transparent' }} />
+        ))}
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+        {icons.map(i => (
+          <TouchableOpacity key={i} onPress={() => setIcon(i)} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: icon === i ? '#3498db' : '#ecf0f1', marginRight: 8, marginBottom: 8, flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name={i as any} size={16} color={icon === i ? '#fff' : '#333'} />
+            <Text style={{ color: icon === i ? '#fff' : '#333', marginLeft: 6 }}>{i}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: '#27ae60', marginTop: 8 }]}
+        onPress={() => {
+          const payload: CreateCategoryRequest = { name: name.trim() };
+          if (icon) payload.icon = icon;
+          if (color) payload.color = color;
+          onCreate(payload);
+          setName(''); setIcon(undefined); setColor(undefined);
+        }}
+      >
+        <Text style={styles.saveButtonText}>Criar</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const CategoryRow: React.FC<{ category: Category; icons: string[]; colors: string[]; onUpdate: (p: UpdateCategoryRequest) => void; onDelete: () => void; }> = ({ category, icons, colors, onUpdate, onDelete }) => {
+  const [name, setName] = useState(category.name);
+  const [icon, setIcon] = useState<string | undefined>(category.icon || undefined);
+  const [color, setColor] = useState<string | undefined>(category.color || undefined);
+  const [cascade, setCascade] = useState(false);
+
+  return (
+    <View style={{ borderBottomWidth: 1, borderBottomColor: '#eee', paddingVertical: 12 }}>
+      <Text style={{ fontWeight: '600', marginBottom: 6 }}>{category.name}</Text>
+      <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nome" />
+      <TextInput style={[styles.input, { marginTop: 8 }]} value={color} onChangeText={setColor} placeholder="Cor (ex: #3498db)" />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+        {icons.map(i => (
+          <TouchableOpacity key={i} onPress={() => setIcon(i)} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: icon === i ? '#3498db' : '#ecf0f1', marginRight: 8, marginBottom: 8 }}>
+            <Text style={{ color: icon === i ? '#fff' : '#333' }}>{i}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: '#3498db', marginRight: 6 }]}
+          onPress={() => onUpdate({ name: name.trim(), icon, color, cascadeUpdate: cascade })}
+        >
+          <Text style={styles.saveButtonText}>Salvar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: '#e74c3c', marginLeft: 6 }]}
+          onPress={onDelete}
+        >
+          <Text style={styles.saveButtonText}>Excluir</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+        <Text style={{ marginRight: 8 }}>Atualizar credenciais existentes</Text>
+        <Switch value={cascade} onValueChange={setCascade} />
+      </View>
+    </View>
   );
 };
 
@@ -484,6 +764,33 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  categoryModalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    backgroundColor: '#3498db',
+    padding: 20,
+    paddingTop: 60,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#fff',
+  },
+  modalContentContainer: {
+    padding: 20,
   },
   form: {
     backgroundColor: '#fff',

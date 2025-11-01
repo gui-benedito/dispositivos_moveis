@@ -1,4 +1,5 @@
 const { Credential, User, CredentialVersion } = require('../models');
+const { Op } = require('sequelize');
 const cryptoService = require('../services/cryptoService');
 const { validationResult } = require('express-validator');
 
@@ -69,41 +70,56 @@ class CredentialController {
   static async getCredentials(req, res) {
     try {
       const userId = req.user.id;
-      const { category, search, favorite } = req.query;
+      const { category, search, favorite, page = '1', limit = '20', sort = 'title', order = 'asc' } = req.query;
 
-      // Construir filtros
+      // Sanitizar paginação
+      const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+      const limitNum = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
+      const offset = (pageNum - 1) * limitNum;
+
+      // Campos permitidos para ordenação
+      const allowedSort = new Set(['title', 'category', 'lastAccessed', 'accessCount', 'createdAt', 'updatedAt', 'isFavorite']);
+      const sortField = allowedSort.has(String(sort)) ? String(sort) : 'title';
+      const sortOrder = String(order).toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+
+      // Filtros
       const whereClause = { userId, isActive: true };
+      if (category) whereClause.category = category;
+      if (favorite === 'true') whereClause.isFavorite = true;
 
-      if (category) {
-        whereClause.category = category;
+      // Busca por título/descrição (case-insensitive) no banco
+      if (search && String(search).trim().length > 0) {
+        const term = `%${String(search).trim()}%`;
+        whereClause[Op.or] = [
+          { title: { [Op.iLike]: term } },
+          { description: { [Op.iLike]: term } }
+        ];
       }
 
-      if (favorite === 'true') {
-        whereClause.isFavorite = true;
-      }
+      // Total para paginação
+      const total = await Credential.count({ where: whereClause });
 
-      // Buscar credenciais
-      let credentials = await Credential.findAll({
+      // Query paginada
+      const credentials = await Credential.findAll({
         where: whereClause,
-        order: [['isFavorite', 'DESC'], ['title', 'ASC']],
+        order: [[sortField, sortOrder]],
+        offset,
+        limit: limitNum,
         attributes: [
           'id', 'title', 'description', 'category', 'isFavorite',
           'accessCount', 'lastAccessed', 'createdAt', 'updatedAt'
         ]
       });
 
-      // Filtrar por busca se especificado
-      if (search) {
-        const searchLower = search.toLowerCase();
-        credentials = credentials.filter(cred => 
-          cred.title.toLowerCase().includes(searchLower) ||
-          (cred.description && cred.description.toLowerCase().includes(searchLower))
-        );
-      }
-
       res.json({
         success: true,
-        data: credentials
+        data: credentials,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.max(Math.ceil(total / limitNum), 1)
+        }
       });
     } catch (error) {
       console.error('Erro ao listar credenciais:', error);

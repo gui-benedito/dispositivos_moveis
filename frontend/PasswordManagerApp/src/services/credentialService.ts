@@ -158,6 +158,10 @@ export class CredentialService {
       if (filters?.favorite !== undefined) {
         params.append('favorite', filters.favorite.toString());
       }
+      if (filters?.page) params.append('page', String(filters.page));
+      if (filters?.limit) params.append('limit', String(filters.limit));
+      if (filters?.sort) params.append('sort', filters.sort);
+      if (filters?.order) params.append('order', filters.order);
 
       const response = await api.get<CredentialsResponse>(`/credentials?${params.toString()}`);
       return response.data;

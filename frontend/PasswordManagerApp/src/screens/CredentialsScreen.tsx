@@ -36,13 +36,17 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
     loading,
     error,
     filters,
+    pagination,
+    isLoadingMore,
     loadCredentials,
+    loadCategories,
     createCredential,
     updateCredential,
     deleteCredential,
     getCredential,
     applyFilters,
-    setError
+    setError,
+    loadMore
   } = useCredentials();
 
   const [showForm, setShowForm] = useState(false);
@@ -369,6 +373,8 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
         onRefresh={loadCredentials}
         filters={filters}
         onFiltersChange={handleApplyFilters}
+        onLoadMore={loadMore}
+        isLoadingMore={isLoadingMore}
       />
 
       {/* Formulário de credencial */}
@@ -393,6 +399,8 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
           loading={loading}
           title={editingCredential ? 'Editar Credencial' : 'Nova Credencial'}
           isEdit={!!editingCredential}
+          categories={categories}
+          onReloadCategories={loadCategories}
         />
       </Modal>
 

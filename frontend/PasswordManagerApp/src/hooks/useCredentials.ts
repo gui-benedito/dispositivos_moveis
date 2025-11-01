@@ -16,6 +16,8 @@ export const useCredentials = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<CredentialFilters>({});
+  const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; totalPages: number } | undefined>(undefined);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Carregar credenciais
   const loadCredentials = useCallback(async (newFilters?: CredentialFilters) => {
@@ -28,6 +30,7 @@ export const useCredentials = () => {
       
       if (response.success) {
         setCredentials(response.data);
+        if (response.pagination) setPagination(response.pagination);
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar credenciais');
@@ -59,6 +62,26 @@ export const useCredentials = () => {
     setFilters({});
     loadCredentials({});
   }, [loadCredentials]);
+
+  // Paginação: carregar próxima página
+  const loadMore = useCallback(async () => {
+    if (!pagination) return;
+    if (pagination.page >= pagination.totalPages) return;
+    try {
+      setIsLoadingMore(true);
+      const next = { ...filters, page: (pagination.page + 1), limit: pagination.limit };
+      const response = await CredentialService.getCredentials(next);
+      if (response.success) {
+        setCredentials(prev => [...prev, ...response.data]);
+        if (response.pagination) setPagination(response.pagination);
+        setFilters(next);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Erro ao carregar mais');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [pagination, filters]);
 
   // Criar credencial
   const createCredential = useCallback(async (data: CreateCredentialRequest) => {
@@ -160,6 +183,8 @@ export const useCredentials = () => {
     loading,
     error,
     filters,
+    pagination,
+    isLoadingMore,
 
     // Ações
     loadCredentials,
@@ -172,7 +197,10 @@ export const useCredentials = () => {
     getCredential,
 
     // Utilitários
-    setError
+    setError,
+
+    // Paginação
+    loadMore
   };
 };
 

@@ -85,6 +85,10 @@ export interface CredentialFilters {
   category?: string;
   search?: string;
   favorite?: boolean;
+  page?: number;
+  limit?: number;
+  sort?: 'title' | 'category' | 'lastAccessed' | 'accessCount' | 'createdAt' | 'updatedAt' | 'isFavorite';
+  order?: 'asc' | 'desc';
 }
 
 export interface CredentialFormData {
@@ -111,6 +115,12 @@ export interface CredentialFormErrors {
 export interface CredentialsResponse {
   success: boolean;
   data: CredentialPublic[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface CredentialResponse {

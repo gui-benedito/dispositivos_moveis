@@ -127,6 +127,16 @@ const Credential = sequelize.define('Credential', {
     },
     {
       fields: ['title']
+    },
+    // Índices compostos para buscas RF12
+    {
+      fields: ['userId', 'isActive', 'title']
+    },
+    {
+      fields: ['userId', 'isActive', 'category']
+    },
+    {
+      fields: ['userId', 'isActive', 'isFavorite']
     }
   ]
 });

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+
 import {
   View,
   Text,
@@ -11,6 +12,8 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { CategoryService } from '../services/categoryService';
+
 import { CredentialPublic, CredentialFilters } from '../types/credential';
 import { CredentialService } from '../services/credentialService';
 
@@ -24,6 +27,8 @@ interface CredentialListProps {
   onRefresh: () => void;
   filters?: CredentialFilters;
   onFiltersChange?: (filters: CredentialFilters) => void;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 }
 
 const CredentialList: React.FC<CredentialListProps> = ({
@@ -35,7 +40,9 @@ const CredentialList: React.FC<CredentialListProps> = ({
   onOpenHistory,
   onRefresh,
   filters = {},
-  onFiltersChange
+  onFiltersChange,
+  onLoadMore,
+  isLoadingMore
 }) => {
   const [searchText, setSearchText] = useState(filters.search || '');
   const [selectedCategory, setSelectedCategory] = useState(filters.category || '');
@@ -43,6 +50,46 @@ const CredentialList: React.FC<CredentialListProps> = ({
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [sortBy, setSortBy] = useState<'title' | 'category' | 'lastAccessed' | 'accessCount'>('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [categoryMeta, setCategoryMeta] = useState<Record<string, { icon?: string | null; color?: string | null }>>({});
+
+  const hexToRGBA = (hex?: string | null, alpha: number = 0.15) => {
+    if (!hex) return `rgba(127,140,141,${alpha})`;
+    const m = hex.trim().match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+    if (!m) return `rgba(127,140,141,${alpha})`;
+    const r = parseInt(m[1], 16);
+    const g = parseInt(m[2], 16);
+    const b = parseInt(m[3], 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  };
+
+  // Debounce da busca (300ms)
+  useEffect(() => {
+    const h = setTimeout(() => {
+      const trimmed = searchText.trim();
+      onFiltersChange?.({
+        ...(filters || {}),
+        search: trimmed || undefined,
+        page: 1
+      });
+    }, 300);
+    return () => clearTimeout(h);
+  }, [searchText]);
+
+  // Carregar metadados de categorias (ícone/cor)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await CategoryService.list();
+        if (mounted && res.success) {
+          const map: Record<string, { icon?: string | null; color?: string | null }> = {};
+          for (const c of res.data) map[c.name] = { icon: c.icon, color: c.color };
+          setCategoryMeta(map);
+        }
+      } catch {}
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   // Aplicar filtros
   const applyFilters = () => {
@@ -85,6 +132,30 @@ const CredentialList: React.FC<CredentialListProps> = ({
   };
 
   // Renderizar item da lista
+  // Destaque do termo buscado
+  const highlightTerm = useMemo(() => (searchText || '').trim(), [searchText]);
+  const renderHighlighted = (text?: string) => {
+    if (!text) return <Text style={styles.credentialDescription}></Text>;
+    if (!highlightTerm) return <Text style={styles.credentialDescription}>{text}</Text>;
+    try {
+      const regex = new RegExp(`(${highlightTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig');
+      const parts = text.split(regex);
+      return (
+        <Text style={styles.credentialDescription}>
+          {parts.map((part, idx) =>
+            regex.test(part) ? (
+              <Text key={idx} style={{ backgroundColor: '#fff3cd', color: '#333', fontWeight: '600' }}>{part}</Text>
+            ) : (
+              <Text key={idx}>{part}</Text>
+            )
+          )}
+        </Text>
+      );
+    } catch {
+      return <Text style={styles.credentialDescription}>{text}</Text>;
+    }
+  };
+
   const renderCredentialItem = ({ item }: { item: CredentialPublic }) => (
     <TouchableOpacity
       style={styles.credentialItem}
@@ -104,7 +175,26 @@ const CredentialList: React.FC<CredentialListProps> = ({
     >
       <View style={styles.credentialHeader}>
         <View style={styles.credentialTitleContainer}>
-          <Text style={styles.credentialTitle}>{item.title}</Text>
+          {/* Título com destaque */}
+          {highlightTerm ? (
+            (() => {
+              const regex = new RegExp(`(${highlightTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig');
+              const parts = item.title.split(regex);
+              return (
+                <Text style={styles.credentialTitle}>
+                  {parts.map((part, idx) =>
+                    regex.test(part) ? (
+                      <Text key={idx} style={{ backgroundColor: '#fff3cd', color: '#333' }}>{part}</Text>
+                    ) : (
+                      <Text key={idx}>{part}</Text>
+                    )
+                  )}
+                </Text>
+              );
+            })()
+          ) : (
+            <Text style={styles.credentialTitle}>{item.title}</Text>
+          )}
           {item.isFavorite && <Text style={styles.favoriteIcon}>⭐</Text>}
         </View>
         <View style={styles.actionsRight}>
@@ -129,13 +219,24 @@ const CredentialList: React.FC<CredentialListProps> = ({
         </View>
       </View>
 
-      <Text style={styles.credentialCategory}>{item.category}</Text>
+      {(() => {
+        const meta = categoryMeta[item.category] || {};
+        const fg = meta?.color || '#7f8c8d';
+        const bg = hexToRGBA(meta?.color, 0.18);
+        return (
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 0, marginTop: 6, alignSelf: 'flex-start' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14 }}>
+              {meta?.icon ? (
+                <Ionicons name={meta.icon as any} size={14} color={fg} style={{ marginRight: 6 }} />
+              ) : null}
+              <Text style={[styles.credentialCategory, { color: fg }]}>
+                {item.category}
+              </Text>
+            </View>
+          </View>
+        );
+      })()}
 
-      {item.description && (
-        <Text style={styles.credentialDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-      )}
 
       <View style={styles.credentialFooter}>
         <View style={styles.credentialStats}>
@@ -169,46 +270,26 @@ const CredentialList: React.FC<CredentialListProps> = ({
     </View>
   );
 
-  // Renderizar header da lista
-  const renderListHeader = () => (
+  // Header memoizado para evitar remount e perda de foco no TextInput
+  const headerElement = useMemo(() => (
     <View style={styles.header}>
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
+          placeholder="Buscar por título, login ou categoria"
           value={searchText}
           onChangeText={setSearchText}
-          placeholder="Buscar credenciais..."
-          placeholderTextColor="#999"
+          returnKeyType="search"
+          blurOnSubmit={false}
         />
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setShowFilterModal(true)}
-        >
-          <Text style={styles.filterButtonText}>🔍</Text>
-        </TouchableOpacity>
       </View>
-
-      <View style={styles.statsContainer}>
-        <Text style={styles.statsText}>
-          {credentials.length} credencial{credentials.length !== 1 ? 'is' : ''}
-        </Text>
-        <TouchableOpacity
-          style={styles.sortButton}
-          onPress={() => {
-            const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-            setSortOrder(newOrder);
-          }}
-        >
-          <Text style={styles.sortButtonText}>
-            {sortBy === 'title' ? '📝' : 
-             sortBy === 'category' ? '📁' : 
-             sortBy === 'lastAccessed' ? '📅' : '👁️'} 
-            {sortOrder === 'asc' ? '↑' : '↓'}
-          </Text>
+      <View style={styles.headerActions}>
+        <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
+          <Text style={styles.filterButtonText}>Filtros</Text>
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [searchText, sortOrder, sortBy]);
 
   return (
     <View style={styles.container}>
@@ -216,12 +297,20 @@ const CredentialList: React.FC<CredentialListProps> = ({
         data={sortedCredentials}
         renderItem={renderCredentialItem}
         keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderListHeader}
+        ListHeaderComponent={headerElement}
         ListEmptyComponent={renderEmptyList}
         refreshing={loading}
         onRefresh={onRefresh}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
+        keyboardShouldPersistTaps="always"
+        onEndReached={onLoadMore}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={isLoadingMore ? (
+          <View style={{ padding: 16, alignItems: 'center' }}>
+            <ActivityIndicator />
+          </View>
+        ) : null}
       />
 
       {/* Modal de filtros */}
@@ -342,6 +431,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -431,13 +525,6 @@ const styles = StyleSheet.create({
   },
   credentialCategory: {
     fontSize: 12,
-    color: '#3498db',
-    backgroundColor: '#e3f2fd',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
   },
   credentialDescription: {
     fontSize: 14,

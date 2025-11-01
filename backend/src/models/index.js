@@ -8,6 +8,7 @@ const VerificationCode = require('./VerificationCode');
 const Note = require('./Note');
 const Backup = require('./Backup');
 const CredentialVersion = require('./CredentialVersion');
+const Category = require('./Category');
 
 // Associações entre modelos
 User.hasMany(BiometricSession, { foreignKey: 'userId', as: 'biometricSessions' });
@@ -15,6 +16,10 @@ BiometricSession.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(Credential, { foreignKey: 'userId', as: 'credentials' });
 Credential.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Categorias personalizadas
+User.hasMany(Category, { foreignKey: 'userId', as: 'categories' });
+Category.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Versionamento de credenciais
 Credential.hasMany(CredentialVersion, { foreignKey: 'credentialId', as: 'versions' });
@@ -74,5 +79,6 @@ module.exports = {
   VerificationCode,
   Note,
   Backup,
+  Category,
   syncDatabase
 };
