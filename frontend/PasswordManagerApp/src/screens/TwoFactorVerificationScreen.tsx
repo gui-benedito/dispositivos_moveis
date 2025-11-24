@@ -196,14 +196,14 @@ const TwoFactorVerificationScreen: React.FC<TwoFactorVerificationScreenProps> = 
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        {/* <TouchableOpacity 
           style={styles.recoveryButton} 
           onPress={onUseRecoveryCode}
         >
           <Text style={styles.recoveryButtonText}>
             Usar código de recuperação
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
           <Text style={styles.cancelButtonText}>Cancelar</Text>

@@ -56,14 +56,14 @@ const NoteEditorScreen: React.FC<NoteEditorScreenProps> = ({ navigation, route }
       setColor(note.color);
       setIsFavorite(note.isFavorite);
       
-      // Se for uma nota segura, mostrar aviso
-      if (note.isSecure) {
-        Alert.alert(
-          'Nota Segura',
-          'Você está editando uma nota criptografada. As alterações serão salvas com segurança.',
-          [{ text: 'Entendi', style: 'default' }]
-        );
-      }
+      // // Se for uma nota segura, mostrar aviso (temporariamente desativado)
+      // if (note.isSecure) {
+      //   Alert.alert(
+      //     'Nota Segura',
+      //     'Você está editando uma nota criptografada. As alterações serão salvas com segurança.',
+      //     [{ text: 'Entendi', style: 'default' }]
+      //   );
+      // }
     }
   }, [note]);
 
@@ -257,24 +257,28 @@ const NoteEditorScreen: React.FC<NoteEditorScreenProps> = ({ navigation, route }
           </View>
 
           {/* Opções de segurança */}
-          <View style={styles.optionsContainer}>
-            <TouchableOpacity
-              style={styles.optionRow}
-              onPress={() => setIsSecure(!isSecure)}
-            >
-              <View style={styles.optionLeft}>
-                <Ionicons
-                  name={isSecure ? "lock-closed" : "lock-open"}
-                  size={20}
-                  color={isSecure ? "#4ECDC4" : "#666"}
-                />
-                <Text style={styles.optionText}>Nota Segura</Text>
-              </View>
-              <View style={[styles.toggle, isSecure && styles.toggleActive]}>
-                <View style={[styles.toggleThumb, isSecure && styles.toggleThumbActive]} />
-              </View>
-            </TouchableOpacity>
-
+          {/* <View style={styles.optionsContainer}> */}
+            {/**
+             * Temporariamente desabilitado: seleção de "Nota Segura" no cadastro/edição
+             *
+             * <TouchableOpacity
+             *   style={styles.optionRow}
+             *   onPress={() => setIsSecure(!isSecure)}
+             * >
+             *   <View style={styles.optionLeft}>
+             *     <Ionicons
+             *       name={isSecure ? "lock-closed" : "lock-open"}
+             *       size={20}
+             *       color={isSecure ? "#4ECDC4" : "#666"}
+             *     />
+             *     <Text style={styles.optionText}>Nota Segura</Text>
+             *   </View>
+             *   <View style={[styles.toggle, isSecure && styles.toggleActive]}>
+             *     <View style={[styles.toggleThumb, isSecure && styles.toggleThumbActive]} />
+             *   </View>
+             * </TouchableOpacity>
+             */}
+{/* 
             {isEditing && (
               <TouchableOpacity
                 style={styles.optionRow}
@@ -293,7 +297,7 @@ const NoteEditorScreen: React.FC<NoteEditorScreenProps> = ({ navigation, route }
                 </View>
               </TouchableOpacity>
             )}
-          </View>
+          </View> */}
 
           {/* Tags */}
           {renderTags()}
@@ -301,15 +305,17 @@ const NoteEditorScreen: React.FC<NoteEditorScreenProps> = ({ navigation, route }
           {/* Cores */}
           {renderColors()}
 
-          {/* Informações de segurança */}
-          {isSecure && (
-            <View style={styles.securityInfo}>
-              <Ionicons name="shield-checkmark" size={20} color="#4ECDC4" />
-              <Text style={styles.securityText}>
-                Esta nota será criptografada e protegida com segurança adicional.
-              </Text>
-            </View>
-          )}
+          {/* Informações de segurança (temporariamente desativado) */}
+          {/**
+           * {isSecure && (
+           *   <View style={styles.securityInfo}>
+           *     <Ionicons name="shield-checkmark" size={20} color="#4ECDC4" />
+           *     <Text style={styles.securityText}>
+           *       Esta nota será criptografada e protegida com segurança adicional.
+           *     </Text>
+           *   </View>
+           * )}
+           */}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
