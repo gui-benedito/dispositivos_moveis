@@ -13,6 +13,7 @@ const simpleBackupRoutes = require('./simpleBackup');
 const googleDriveRoutes = require('./googleDrive');
 const directGoogleDriveRoutes = require('./directGoogleDrive');
 const categoryRoutes = require('./categories');
+const exportRoutes = require('./export');
 
 // Configurar rotas
 router.use('/auth', authRoutes);
@@ -26,6 +27,7 @@ router.use('/simple-backup', simpleBackupRoutes);
 router.use('/google-drive', googleDriveRoutes);
 router.use('/direct-google-drive', directGoogleDriveRoutes);
 router.use('/categories', categoryRoutes);
+router.use('/export', exportRoutes);
 
 /**
  * @swagger

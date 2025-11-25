@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Share,
+  TextInput,
   Switch,
   Modal,
   FlatList,
@@ -14,6 +16,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthenticatedSettings } from '../hooks/useAuthenticatedSettings';
 import { useTwoFactor } from '../hooks/useTwoFactor';
 import { LOCK_TIMEOUT_OPTIONS } from '../types/settings';
+import { ExportService } from '../services/exportService';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 
 interface SettingsScreenProps {
   onLogout: () => void;
@@ -32,6 +37,46 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [showMasterPasswordModal, setShowMasterPasswordModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportPassword, setExportPassword] = useState('');
+  const [exporting, setExporting] = useState(false);
+
+  /**
+   * Exportar dados (JSON) com senha mestra para arquivo e compartilhar
+   */
+  const handleExport = async () => {
+    if (!exportPassword.trim()) {
+      Alert.alert('Senha necessária', 'Informe a senha mestra para exportar.');
+      return;
+    }
+    try {
+      setExporting(true);
+      const resp = await ExportService.exportJson(exportPassword.trim());
+      if (!resp?.success) {
+        throw new Error(resp?.message || 'Falha na exportação');
+      }
+      const payload = resp.data || {};
+      const json = JSON.stringify(payload, null, 2);
+      const stamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
+      const safeEmail = (user?.email || 'user').replace(/[^a-zA-Z0-9_.-]/g, '_');
+      const fileName = `PasswordManager-Export-${safeEmail}-${stamp}.json`;
+      const uri = `${FileSystem.cacheDirectory}${fileName}`;
+      await FileSystem.writeAsStringAsync(uri, json);
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: 'Exportação Password Manager' });
+      } else {
+        await Share.share({ title: fileName, url: uri, message: json });
+      }
+
+      setShowExportModal(false);
+      setExportPassword('');
+    } catch (e: any) {
+      Alert.alert('Erro', e?.message || 'Erro ao exportar dados');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Carregar status do 2FA ao montar o componente
   React.useEffect(() => {
@@ -357,6 +402,18 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
           </View>
         </View>
 
+        {/* Exportação de Dados */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>⬇️ Exportação</Text>
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowExportModal(true)}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Exportar dados (JSON)</Text>
+              <Text style={styles.settingDescription}>Requer senha mestra para descriptografar e exportar</Text>
+            </View>
+            <Ionicons name="download" size={20} color="#4ECDC4" />
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>Sair da Conta</Text>
         </TouchableOpacity>
@@ -520,6 +577,55 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
               }}
             >
               <Text style={styles.actionButtonText}>Configurar Senha Mestra</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Exportação JSON */}
+      <Modal
+        visible={showExportModal}
+        animationType="slide"
+        onRequestClose={() => setShowExportModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowExportModal(false)} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Exportar Dados (JSON)</Text>
+            <View style={styles.placeholder} />
+          </View>
+
+          <View style={styles.modalContent}>
+            <Text style={{ fontSize: 16, color: '#333', marginBottom: 12 }}>
+              Informe sua senha mestra para gerar o JSON com suas credenciais e notas.
+            </Text>
+            <Text style={{ color: '#666', marginBottom: 8 }}>Senha Mestra</Text>
+            <TextInput
+              value={exportPassword}
+              onChangeText={setExportPassword}
+              placeholder="Digite sua senha mestra"
+              secureTextEntry
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 12,
+                borderWidth: 1,
+                borderColor: '#e0e0e0',
+                marginBottom: 16
+              }}
+            />
+
+            <TouchableOpacity
+              style={[styles.actionButton, exporting && { opacity: 0.7 }]}
+              onPress={handleExport}
+              disabled={exporting}
+            >
+              <Text style={styles.actionButtonText}>
+                {exporting ? 'Exportando...' : 'Gerar e Compartilhar JSON'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
