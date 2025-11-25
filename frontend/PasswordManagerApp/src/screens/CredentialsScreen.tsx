@@ -11,6 +11,8 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../contexts/ThemeContext';
 import { useCredentials } from '../hooks/useCredentials';
 import CredentialList from '../components/CredentialList';
 import CredentialForm from '../components/CredentialForm';
@@ -30,6 +32,7 @@ interface CredentialsScreenProps {
 }
 
 const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack }) => {
+  const { colors } = useTheme();
   const {
     credentials,
     categories,
@@ -208,9 +211,9 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
         animationType="slide"
         presentationStyle="pageSheet"
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{viewingCredential.title}</Text>
+        <View style={[styles.modalContainer, { backgroundColor: colors.background }] }>
+          <View style={[styles.modalHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }] }>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{viewingCredential.title}</Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => {
@@ -229,35 +232,35 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
             showsVerticalScrollIndicator
           >
             <View style={styles.credentialField}>
-              <Text style={styles.fieldLabel}>Categoria</Text>
-              <Text style={styles.fieldValue}>{viewingCredential.category}</Text>
+              <Text style={[styles.fieldLabel, { color: colors.mutedText }]}>Categoria</Text>
+              <Text style={[styles.fieldValue, { backgroundColor: colors.card, color: colors.text }] }>{viewingCredential.category}</Text>
             </View>
 
             {viewingCredential.description && (
               <View style={styles.credentialField}>
-                <Text style={styles.fieldLabel}>Descrição</Text>
-                <Text style={styles.fieldValue}>{viewingCredential.description}</Text>
+                <Text style={[styles.fieldLabel, { color: colors.mutedText }]}>Descrição</Text>
+                <Text style={[styles.fieldValue, { backgroundColor: colors.card, color: colors.text }]}>{viewingCredential.description}</Text>
               </View>
             )}
 
             <View style={styles.credentialField}>
-              <Text style={styles.fieldLabel}>Nome de usuário / Email</Text>
-              <Text style={styles.fieldValue}>{decryptedCredential?.username || 'Não informado'}</Text>
+              <Text style={[styles.fieldLabel, { color: colors.mutedText }]}>Nome de usuário / Email</Text>
+              <Text style={[styles.fieldValue, { backgroundColor: colors.card, color: colors.text }] }>{decryptedCredential?.username || 'Não informado'}</Text>
             </View>
 
             <View style={styles.credentialField}>
-              <Text style={styles.fieldLabel}>Senha</Text>
-              <Text style={styles.fieldValue}>{decryptedCredential?.password || 'Não informado'}</Text>
+              <Text style={[styles.fieldLabel, { color: colors.mutedText }]}>Senha</Text>
+              <Text style={[styles.fieldValue, { backgroundColor: colors.card, color: colors.text }]}>{decryptedCredential?.password || 'Não informado'}</Text>
             </View>
 
             <View style={styles.credentialField}>
-              <Text style={styles.fieldLabel}>Notas</Text>
-              <Text style={styles.fieldValue}>{decryptedCredential?.notes || 'Não informado'}</Text>
+              <Text style={[styles.fieldLabel, { color: colors.mutedText }]}>Notas</Text>
+              <Text style={[styles.fieldValue, { backgroundColor: colors.card, color: colors.text }]}>{decryptedCredential?.notes || 'Não informado'}</Text>
             </View>
 
-            <View style={styles.credentialStats}>
-              <Text style={styles.statsTitle}>Estatísticas</Text>
-              <Text style={styles.statsText}>
+            <View style={[styles.credentialStats, { backgroundColor: colors.card }] }>
+              <Text style={[styles.statsTitle, { color: colors.text }]}>Estatísticas</Text>
+              <Text style={[styles.statsText, { color: colors.mutedText }] }>
                 Acessos: {viewingCredential.accessCount}
               </Text>
               <Text style={styles.statsText}>
@@ -272,9 +275,9 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
             </View>
           </ScrollView>
 
-          <View style={styles.modalFooter}>
+          <View style={[styles.modalFooter, { borderTopColor: colors.border }] }>
             <TouchableOpacity
-              style={styles.modalButton}
+              style={[styles.modalButton, { backgroundColor: colors.primary }]}
               onPress={() => {
                 setShowCredentialModal(false);
                 setViewingCredential(null);
@@ -297,15 +300,15 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
       transparent
     >
       <View style={styles.passwordModalOverlay}>
-        <View style={styles.passwordModalContainer}>
-          <Text style={styles.passwordModalTitle}>Senha Mestre</Text>
-          <Text style={styles.passwordModalSubtitle}>
+        <View style={[styles.passwordModalContainer, { backgroundColor: colors.card }] }>
+          <Text style={[styles.passwordModalTitle, { color: colors.text }]}>Senha Mestre</Text>
+          <Text style={[styles.passwordModalSubtitle, { color: colors.mutedText }] }>
             Digite sua senha mestre para visualizar a credencial
           </Text>
           
           <View style={styles.passwordInputContainer}>
             <TextInput
-              style={styles.passwordInput}
+              style={[styles.passwordInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
               value={masterPassword}
               onChangeText={setMasterPassword}
               placeholder="Sua senha mestre"
@@ -341,20 +344,20 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={onNavigateBack}
         >
-          <Text style={styles.backButtonText}>← Voltar</Text>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        
-        <Text style={styles.title}>Cofre de Senhas</Text>
-        
+
+        <Text style={[styles.title, { color: colors.text }]}>Suas Credenciais</Text>
+
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={handleCreateCredential}
           disabled={loading}
         >
@@ -417,9 +420,9 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
         presentationStyle="pageSheet"
         onRequestClose={() => setShowVersionsModal(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Histórico de Versões</Text>
+        <View style={[styles.modalContainer, { backgroundColor: colors.background }] }>
+          <View style={[styles.modalHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }] }>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Histórico de Versões</Text>
             <TouchableOpacity style={styles.closeButton} onPress={() => setShowVersionsModal(false)}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
@@ -433,32 +436,32 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
               <Text style={[styles.errorText, { margin: 16 }]}>{versionsError}</Text>
             )}
             {!versionsLoading && versions.length === 0 && (
-              <Text style={{ margin: 16, color: '#666' }}>Nenhuma versão encontrada.</Text>
+              <Text style={{ margin: 16, color: colors.mutedText }}>Nenhuma versão encontrada.</Text>
             )}
             {!versionsLoading && versions.length > 0 && (
               <ScrollView contentContainerStyle={styles.modalContentContainer}>
                 {versions.map(v => (
                   <View key={v.id} style={styles.versionItem}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.versionTitle}>Versão {v.version} • {new Date(v.createdAt).toLocaleString('pt-BR')}</Text>
-                      <Text style={styles.versionMeta}>Título: {v.title} • Categoria: {v.category} {v.isFavorite ? '• ⭐' : ''}</Text>
+                      <Text style={[styles.versionTitle, { color: colors.text }]}>Versão {v.version} • {new Date(v.createdAt).toLocaleString('pt-BR')}</Text>
+                      <Text style={[styles.versionMeta, { color: colors.mutedText }]}>Título: {v.title} • Categoria: {v.category} {v.isFavorite ? '• ⭐' : ''}</Text>
                     </View>
                     <TouchableOpacity
-                      style={[styles.modalButton, styles.modalButtonPrimary]}
+                        style={[styles.modalButton, styles.modalButtonPrimary, { backgroundColor: colors.primary }]}
                       onPress={() => {
                         setSelectedVersion(v.version);
                       }}
                     >
-                      <Text style={styles.modalButtonPrimaryText}>Restaurar</Text>
+                        <Text style={[styles.modalButtonPrimaryText, { color: colors.text }]}>Restaurar</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
 
                 {selectedVersion !== null && (
-                  <View style={styles.restoreBox}>
-                    <Text style={styles.fieldLabel}>Senha Mestre</Text>
+                  <View style={[styles.restoreBox, { backgroundColor: colors.card }] }>
+                    <Text style={[styles.fieldLabel, { color: colors.mutedText }]}>Senha Mestre</Text>
                     <TextInput
-                      style={styles.passwordInput}
+                      style={[styles.passwordInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
                       value={restoreMasterPassword}
                       onChangeText={setRestoreMasterPassword}
                       placeholder="Informe sua senha mestre"
@@ -507,7 +510,7 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
 
       {/* Indicador de erro */}
       {error && (
-        <View style={styles.errorContainer}>
+        <View style={[styles.errorContainer, { backgroundColor: colors.danger }] }>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity
             style={styles.errorCloseButton}

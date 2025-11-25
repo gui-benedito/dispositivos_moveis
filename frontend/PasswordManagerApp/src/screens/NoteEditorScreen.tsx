@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotes } from '../hooks/useNotes';
 import { Note, CreateNoteRequest, UpdateNoteRequest } from '../types/note';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface NoteEditorScreenProps {
   navigation: any;
@@ -27,6 +28,7 @@ interface NoteEditorScreenProps {
 
 const NoteEditorScreen: React.FC<NoteEditorScreenProps> = ({ navigation, route }) => {
   const { createNote, updateNote, loading } = useNotes();
+  const { colors } = useTheme();
   
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -36,6 +38,8 @@ const NoteEditorScreen: React.FC<NoteEditorScreenProps> = ({ navigation, route }
   const [isFavorite, setIsFavorite] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const isDarkTheme = colors.background === '#121212';
 
   const isEditing = route?.params?.note;
   const note = route?.params?.note;
@@ -97,21 +101,27 @@ const NoteEditorScreen: React.FC<NoteEditorScreenProps> = ({ navigation, route }
     setSaving(true);
 
     try {
-      const noteData: CreateNoteRequest | UpdateNoteRequest = {
-        title: title.trim(),
-        content: content.trim(),
-        isSecure,
-        tags,
-        color,
-        ...(isEditing && { isFavorite })
-      };
-
       let savedNote: Note | null = null;
 
       if (isEditing && note) {
-        savedNote = await updateNote(note.id, noteData);
+        const updateData: UpdateNoteRequest = {
+          title: title.trim(),
+          content: content.trim(),
+          isSecure,
+          tags,
+          color,
+          isFavorite,
+        };
+        savedNote = await updateNote(note.id, updateData);
       } else {
-        savedNote = await createNote(noteData);
+        const createData: CreateNoteRequest = {
+          title: title.trim(),
+          content: content.trim(),
+          isSecure,
+          tags,
+          color,
+        };
+        savedNote = await createNote(createData);
       }
 
       if (savedNote) {
@@ -198,112 +208,120 @@ const NoteEditorScreen: React.FC<NoteEditorScreenProps> = ({ navigation, route }
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }] }>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }] }>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { color: colors.text }] }>
             {isEditing ? 'Editar Nota' : 'Nova Nota'}
           </Text>
           
           <TouchableOpacity
             onPress={handleSave}
-            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+            style={[styles.saveButton, saving && styles.saveButtonDisabled, { backgroundColor: saving ? colors.mutedText : colors.primary }]}
             disabled={saving || !title.trim() || !content.trim()}
           >
             {saving ? (
-              <ActivityIndicator size="small" color="white" />
+              <ActivityIndicator size="small" color={colors.text} />
             ) : (
-              <Ionicons name="checkmark" size={24} color="white" />
-            )}
-          </TouchableOpacity>
+
+/**
+ * Renderizar cores
+ */
+const renderColors = () => (
+  <View style={styles.colorsContainer}>
+    <Text style={styles.sectionTitle}>Cor</Text>
+    <View style={styles.colorsList}>
+      {availableColors.map((colorOption) => (
+        <TouchableOpacity
+          key={colorOption}
+          style={[
+            styles.colorOption,
+            { backgroundColor: colorOption },
+            color === colorOption && styles.colorOptionSelected
+          ]}
+          onPress={() => setColor(colorOption)}
+        >
+          {color === colorOption && (
+            <Ionicons name="checkmark" size={16} color="white" />
+          )}
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
+);
+
+return (
+  <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <KeyboardAvoidingView
+      style={styles.keyboardView}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
+        </TouchableOpacity>
+        
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          {isEditing ? 'Editar Nota' : 'Nova Nota'}
+        </Text>
+        
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.saveButton, saving && styles.saveButtonDisabled, { backgroundColor: saving ? colors.mutedText : colors.primary }]}
+          disabled={saving || !title.trim() || !content.trim()}
+        >
+          {saving ? (
+            <ActivityIndicator size="small" color={colors.text} />
+          ) : (
+            <Ionicons name="checkmark" size={24} color={colors.text} />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Título */}
+        <View style={styles.inputContainer}>
+          <Text style={[styles.label, { color: colors.text }]}>Título *</Text>
+          <TextInput
+            style={styles.titleInput}
+            placeholder="Digite o título da nota..."
+            value={title}
+            onChangeText={setTitle}
+            maxLength={255}
+          />
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Título */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Título *</Text>
-            <TextInput
-              style={styles.titleInput}
-              placeholder="Digite o título da nota..."
-              value={title}
-              onChangeText={setTitle}
-              maxLength={255}
-            />
-          </View>
+        {/* Conteúdo */}
+        <View style={styles.inputContainer}>
+          <Text style={[styles.label, { color: colors.text }]}>Conteúdo *</Text>
+          <TextInput
+            style={styles.contentInput}
+            placeholder="Digite o conteúdo da nota..."
+            value={content}
+            onChangeText={setContent}
+            multiline
+            textAlignVertical="top"
+            maxLength={10000}
+          />
+        </View>
 
-          {/* Conteúdo */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Conteúdo *</Text>
-            <TextInput
-              style={styles.contentInput}
-              placeholder="Digite o conteúdo da nota..."
-              value={content}
-              onChangeText={setContent}
-              multiline
-              textAlignVertical="top"
-              maxLength={10000}
-            />
-          </View>
-
-          {/* Opções de segurança */}
-          {/* <View style={styles.optionsContainer}> */}
-            {/**
-             * Temporariamente desabilitado: seleção de "Nota Segura" no cadastro/edição
-             *
-             * <TouchableOpacity
-             *   style={styles.optionRow}
-             *   onPress={() => setIsSecure(!isSecure)}
-             * >
-             *   <View style={styles.optionLeft}>
-             *     <Ionicons
-             *       name={isSecure ? "lock-closed" : "lock-open"}
-             *       size={20}
-             *       color={isSecure ? "#4ECDC4" : "#666"}
-             *     />
-             *     <Text style={styles.optionText}>Nota Segura</Text>
-             *   </View>
-             *   <View style={[styles.toggle, isSecure && styles.toggleActive]}>
-             *     <View style={[styles.toggleThumb, isSecure && styles.toggleThumbActive]} />
-             *   </View>
-             * </TouchableOpacity>
-             */}
-{/* 
-            {isEditing && (
-              <TouchableOpacity
-                style={styles.optionRow}
-                onPress={() => setIsFavorite(!isFavorite)}
-              >
-                <View style={styles.optionLeft}>
-                  <Ionicons
-                    name={isFavorite ? "heart" : "heart-outline"}
-                    size={20}
-                    color={isFavorite ? "#e74c3c" : "#666"}
-                  />
-                  <Text style={styles.optionText}>Favorita</Text>
-                </View>
-                <View style={[styles.toggle, isFavorite && styles.toggleActive]}>
-                  <View style={[styles.toggleThumb, isFavorite && styles.toggleThumbActive]} />
-                </View>
-              </TouchableOpacity>
-            )}
-          </View> */}
-
-          {/* Tags */}
-          {renderTags()}
-
-          {/* Cores */}
-          {renderColors()}
+        {/* Tags */}
+        {renderTags()}
 
           {/* Informações de segurança (temporariamente desativado) */}
           {/**

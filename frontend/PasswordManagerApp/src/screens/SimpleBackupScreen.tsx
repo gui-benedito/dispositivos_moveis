@@ -12,12 +12,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { useSimpleBackup } from '../hooks/useSimpleBackup';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SimpleBackupScreenProps {
   navigation: any;
 }
 
 const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) => {
+  const { colors } = useTheme();
   const {
     loading,
     error,
@@ -51,7 +53,8 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
       
       if (response?.success) {
         // Verificar se foi enviado automaticamente para Google Drive
-            if (response.data.autoUpload?.success) {
+        const autoUpload = (response as any).data?.autoUpload;
+        if (autoUpload?.success) {
               Alert.alert(
                 'Backup Enviado!',
                 `Backup enviado automaticamente para o Google Drive!\n\n` +
@@ -64,7 +67,7 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
               );
         } else {
           // Fallback: compartilhar arquivo
-          await downloadBackup(response.data.backupData, response.data.filename, response.data.filePath);
+          await downloadBackup(response.data.backupData, response.data.filename);
           
           Alert.alert(
             'Backup Gerado!',
@@ -222,33 +225,52 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }] }>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }] }>
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Backup Simples</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Backup Simples</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Tabs */}
-        <View style={styles.tabContainer}>
+        <View style={[styles.tabContainer, { backgroundColor: colors.card }]}>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'generate' && styles.activeTab]}
+            style={[
+              styles.tab,
+              activeTab === 'generate' && { backgroundColor: colors.primary },
+            ]}
             onPress={() => setActiveTab('generate')}
           >
-            <Text style={[styles.tabText, activeTab === 'generate' && styles.activeTabText]}>
+            <Text
+              style={[
+                styles.tabText,
+                { color: colors.mutedText },
+                activeTab === 'generate' && { color: '#FFFFFF' },
+              ]}
+            >
               Gerar Backup
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'restore' && styles.activeTab]}
+            style={[
+              styles.tab,
+              activeTab === 'restore' && { backgroundColor: colors.primary },
+            ]}
             onPress={() => setActiveTab('restore')}
           >
-            <Text style={[styles.tabText, activeTab === 'restore' && styles.activeTabText]}>
+            <Text
+              style={[
+                styles.tabText,
+                { color: colors.mutedText },
+                activeTab === 'restore' && { color: '#FFFFFF' },
+              ]}
+            >
               Restaurar Backup
             </Text>
           </TouchableOpacity>
@@ -257,19 +279,19 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
         {/* Conteúdo das tabs */}
         {activeTab === 'generate' ? (
           <View style={styles.tabContent}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>📦 Backup Automático</Text>
-              <Text style={styles.sectionDescription}>
+            <View style={[styles.section, { backgroundColor: colors.card }] }>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}> Backup Automático</Text>
+              <Text style={[styles.sectionDescription, { color: colors.mutedText }] }>
                 Se seu email for do Google (Gmail), um arquivo .encrypted será enviado automaticamente para o Google Drive.
                 Caso contrário, apenas o conteúdo criptografado será compartilhado para você salvar em um arquivo .encrypted.
               </Text>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Senha Mestra</Text>
-              <View style={styles.passwordContainer}>
+              <Text style={[styles.label, { color: colors.text }]}>Senha Mestra</Text>
+              <View style={[styles.passwordContainer, { backgroundColor: colors.card, borderColor: colors.border }] }>
                 <TextInput
-                  style={styles.passwordInput}
+                  style={[styles.passwordInput, { color: colors.text }]}
                   value={masterPassword}
                   onChangeText={setMasterPassword}
                   placeholder="Digite sua senha mestra"
@@ -283,14 +305,14 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
                   <Ionicons 
                     name={showPassword ? "eye-off" : "eye"} 
                     size={20} 
-                    color="#666" 
+                    color={colors.mutedText}
                   />
                 </TouchableOpacity>
               </View>
             </View>
 
             <TouchableOpacity
-              style={[styles.button, styles.generateButton]}
+              style={[styles.button, { backgroundColor: colors.primary }]}
               onPress={handleAutoBackup}
               disabled={loading}
             >
@@ -299,16 +321,16 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
               ) : (
                 <>
                   <Ionicons name="cloud-upload" size={20} color="#fff" />
-                  <Text style={styles.buttonText}>Gerar Backup Automático</Text>
+                  <Text style={styles.buttonText}>Gerar e Enviar Backup</Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.tabContent}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🔄 Restaurar Backup</Text>
-              <Text style={styles.sectionDescription}>
+            <View style={[styles.section, { backgroundColor: colors.card }] }>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>📂 Restaurar de Arquivo</Text>
+              <Text style={[styles.sectionDescription, { color: colors.mutedText }] }>
                 Restaure um backup anterior. Você pode fazer upload do arquivo .encrypted ou colar o conteúdo.
               </Text>
             </View>
@@ -316,13 +338,13 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
             {/* Upload de arquivo */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Arquivo de Backup (.encrypted)</Text>
-              <View style={styles.fileUploadContainer}>
+              <View style={[styles.fileUploadContainer, { backgroundColor: colors.card, borderColor: colors.border }] }>
                 <TouchableOpacity
                   style={styles.fileUploadButton}
                   onPress={handleFileSelect}
                 >
-                  <Ionicons name="cloud-upload" size={20} color="#007AFF" />
-                  <Text style={styles.fileUploadText}>
+                  <Ionicons name="document-text" size={20} color="#03A9F4" />
+                  <Text style={[styles.fileUploadText, { color: '#03A9F4' }] }>
                     {selectedFile ? selectedFile.name : 'Selecionar Arquivo'}
                   </Text>
                 </TouchableOpacity>
@@ -331,7 +353,7 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
                     style={styles.removeFileButton}
                     onPress={() => setSelectedFile(null)}
                   >
-                    <Ionicons name="close-circle" size={20} color="#FF3B30" />
+                    <Ionicons name="close-circle" size={20} color={colors.danger} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -339,16 +361,16 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
 
             {/* OU */}
             <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OU</Text>
-              <View style={styles.dividerLine} />
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dividerText, { color: colors.mutedText }]}>OU</Text>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
             {/* Entrada manual */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Dados do Backup (Manual)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Dados do Backup (Manual)</Text>
               <TextInput
-                style={[styles.textArea, styles.backupInput]}
+                style={[styles.textArea, styles.backupInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                 value={backupData}
                 onChangeText={setBackupData}
                 placeholder="Cole aqui o conteúdo do arquivo .encrypted"
@@ -384,7 +406,7 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
             </View>
 
             <TouchableOpacity
-              style={[styles.button, styles.restoreButton]}
+              style={[styles.button, { backgroundColor: colors.primary }]}
               onPress={selectedFile ? handleRestoreFromFile : handleRestoreBackup}
               disabled={loading}
             >
@@ -403,9 +425,9 @@ const SimpleBackupScreen: React.FC<SimpleBackupScreenProps> = ({ navigation }) =
         )}
 
         {/* Informações */}
-        <View style={styles.infoSection}>
-          <Text style={styles.infoTitle}>ℹ️ Como funciona</Text>
-          <Text style={styles.infoText}>
+        <View style={[styles.infoSection, { backgroundColor: colors.card }] }>
+          <Text style={[styles.infoTitle, { color: colors.text }]}>ℹ️ Como funciona</Text>
+          <Text style={[styles.infoText, { color: colors.mutedText }] }>
             • O backup é criptografado com sua senha mestra{'\n'}
             • Arquivo gerado com extensão .encrypted{'\n'}
             • Se for Gmail, vai direto para Google Drive{'\n'}

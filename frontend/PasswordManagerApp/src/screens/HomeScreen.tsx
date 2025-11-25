@@ -7,6 +7,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface HomeScreenProps {
   onLogout: () => void;
@@ -22,6 +23,7 @@ interface HomeScreenProps {
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings, onNavigateToCredentials, onNavigateToNotes, onNavigateToSimpleBackup, user }) => {
+  const { colors } = useTheme();
   const handleLogout = () => {
     Alert.alert(
       'Logout',
@@ -34,48 +36,48 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings,
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Gerenciador de Senhas</Text>
-        <Text style={styles.subtitle}>
+    <View style={[styles.container, { backgroundColor: colors.background }] }>
+      <View style={[styles.header, { backgroundColor: colors.primary }] }>
+        <Text style={[styles.title, { color: '#FFFFFF' }]}>Gerenciador de Senhas</Text>
+        <Text style={[styles.subtitle, { color: '#FFFFFF' }]}>
           Bem-vindo, {user.firstName} {user.lastName}!
         </Text>
-        <Text style={styles.email}>{user.email}</Text>
+        <Text style={[styles.email, { color: '#E0E0E0' }]}>{user.email}</Text>
       </View>
 
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-        <Text style={styles.welcomeText}>
+        <Text style={[styles.welcomeText, { color: colors.text }]}>
           Suas credenciais estão seguras e criptografadas.
         </Text>
         
-        <View style={styles.features}>
-          <Text style={styles.featuresTitle}>Funcionalidades disponíveis:</Text>
-          <Text style={styles.feature}>• Cofre de senhas criptografado</Text>
-          <Text style={styles.feature}>• Gerador de senhas fortes</Text>
-          <Text style={styles.feature}>• Categorias personalizadas</Text>
-          <Text style={styles.feature}>• Busca rápida</Text>
-          <Text style={styles.feature}>• Bloqueio automático</Text>
-          <Text style={styles.feature}>• Autenticação biométrica</Text>
+        <View style={[styles.features, { backgroundColor: colors.card }] }>
+          <Text style={[styles.featuresTitle, { color: colors.text }]}>Funcionalidades disponíveis:</Text>
+          <Text style={[styles.feature, { color: colors.mutedText }]}>• Cofre de senhas criptografado</Text>
+          <Text style={[styles.feature, { color: colors.mutedText }]}>• Gerador de senhas fortes</Text>
+          <Text style={[styles.feature, { color: colors.mutedText }]}>• Categorias personalizadas</Text>
+          <Text style={[styles.feature, { color: colors.mutedText }]}>• Busca rápida</Text>
+          <Text style={[styles.feature, { color: colors.mutedText }]}>• Bloqueio automático</Text>
+          <Text style={[styles.feature, { color: colors.mutedText }]}>• Autenticação biométrica</Text>
         </View>
 
-        <TouchableOpacity style={styles.credentialsButton} onPress={onNavigateToCredentials}>
+        <TouchableOpacity style={[styles.credentialsButton, { backgroundColor: colors.primary }]} onPress={onNavigateToCredentials}>
           <Text style={styles.credentialsButtonText}>🔐 Acessar Cofre de Senhas</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.notesButton} onPress={onNavigateToNotes}>
+        <TouchableOpacity style={[styles.notesButton, { backgroundColor: colors.primary }]} onPress={onNavigateToNotes}>
           <Text style={styles.notesButtonText}>📝 Notas Seguras</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.simpleBackupButton} onPress={onNavigateToSimpleBackup}>
+        <TouchableOpacity style={[styles.simpleBackupButton, { backgroundColor: colors.primary }]} onPress={onNavigateToSimpleBackup}>
           <Text style={styles.simpleBackupButtonText}>💾 Backup em Nuvem</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingsButton} onPress={onNavigateToSettings}>
+        <TouchableOpacity style={[styles.settingsButton, { backgroundColor: colors.primary }]} onPress={onNavigateToSettings}>
           <Text style={styles.settingsButtonText}>⚙️ Configurações</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.danger }]} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>Sair</Text>
         </TouchableOpacity>
         </View>

@@ -16,6 +16,7 @@ import { CategoryService } from '../services/categoryService';
 
 import { CredentialPublic, CredentialFilters } from '../types/credential';
 import { CredentialService } from '../services/credentialService';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface CredentialListProps {
   credentials: CredentialPublic[];
@@ -44,6 +45,7 @@ const CredentialList: React.FC<CredentialListProps> = ({
   onLoadMore,
   isLoadingMore
 }) => {
+  const { colors } = useTheme();
   const [searchText, setSearchText] = useState(filters.search || '');
   const [selectedCategory, setSelectedCategory] = useState(filters.category || '');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(filters.favorite || false);
@@ -158,7 +160,7 @@ const CredentialList: React.FC<CredentialListProps> = ({
 
   const renderCredentialItem = ({ item }: { item: CredentialPublic }) => (
     <TouchableOpacity
-      style={styles.credentialItem}
+      style={[styles.credentialItem, { backgroundColor: colors.card }]}
       onPress={() => onCredentialPress(item)}
       onLongPress={() => {
         Alert.alert(
@@ -181,7 +183,7 @@ const CredentialList: React.FC<CredentialListProps> = ({
               const regex = new RegExp(`(${highlightTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig');
               const parts = item.title.split(regex);
               return (
-                <Text style={styles.credentialTitle}>
+                <Text style={[styles.credentialTitle, { color: colors.text }] }>
                   {parts.map((part, idx) =>
                     regex.test(part) ? (
                       <Text key={idx} style={{ backgroundColor: '#fff3cd', color: '#333' }}>{part}</Text>
@@ -193,7 +195,7 @@ const CredentialList: React.FC<CredentialListProps> = ({
               );
             })()
           ) : (
-            <Text style={styles.credentialTitle}>{item.title}</Text>
+            <Text style={[styles.credentialTitle, { color: colors.text }]}>{item.title}</Text>
           )}
           {item.isFavorite && <Text style={styles.favoriteIcon}>⭐</Text>}
         </View>
@@ -249,7 +251,7 @@ const CredentialList: React.FC<CredentialListProps> = ({
             </Text>
           )}
         </View>
-        <Text style={styles.credentialDate}>
+        <Text style={[styles.credentialDate, { color: colors.mutedText }]}>
           {new Date(item.createdAt).toLocaleDateString('pt-BR')}
         </Text>
       </View>
@@ -260,8 +262,8 @@ const CredentialList: React.FC<CredentialListProps> = ({
   const renderEmptyList = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>🔐</Text>
-      <Text style={styles.emptyTitle}>Nenhuma credencial encontrada</Text>
-      <Text style={styles.emptySubtitle}>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>Nenhuma credencial encontrada</Text>
+      <Text style={[styles.emptySubtitle, { color: colors.mutedText }]}>
         {Object.keys(filters).length > 0 
           ? 'Tente ajustar os filtros de busca'
           : 'Crie sua primeira credencial para começar'
@@ -272,10 +274,10 @@ const CredentialList: React.FC<CredentialListProps> = ({
 
   // Header memoizado para evitar remount e perda de foco no TextInput
   const headerElement = useMemo(() => (
-    <View style={styles.header}>
+    <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }] }>
       <View style={styles.searchContainer}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
           placeholder="Buscar por título, login ou categoria"
           value={searchText}
           onChangeText={setSearchText}
@@ -289,10 +291,10 @@ const CredentialList: React.FC<CredentialListProps> = ({
         </TouchableOpacity>
       </View>
     </View>
-  ), [searchText, sortOrder, sortBy]);
+  ), [searchText, sortOrder, sortBy, colors]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }] }>
       <FlatList
         data={sortedCredentials}
         renderItem={renderCredentialItem}

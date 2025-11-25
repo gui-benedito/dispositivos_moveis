@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useTwoFactor } from '../hooks/useTwoFactor';
 import { TwoFactorMethod } from '../types/twoFactor';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface RecoveryCodeScreenProps {
   method: TwoFactorMethod;
@@ -30,6 +31,7 @@ const RecoveryCodeScreen: React.FC<RecoveryCodeScreenProps> = ({
     verify2FA,
     clearError
   } = useTwoFactor();
+  const { colors } = useTheme();
 
   const [recoveryCode, setRecoveryCode] = useState('');
   const [attempts, setAttempts] = useState(0);
@@ -87,17 +89,17 @@ const RecoveryCodeScreen: React.FC<RecoveryCodeScreenProps> = ({
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }] }>
       <View style={styles.content}>
         <Text style={styles.icon}>🔑</Text>
-        <Text style={styles.title}>Código de Recuperação</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.text }]}>Código de Recuperação</Text>
+        <Text style={[styles.subtitle, { color: colors.mutedText }]}>
           Digite um dos seus códigos de recuperação para acessar sua conta
         </Text>
 
-        <View style={styles.instructionContainer}>
-          <Text style={styles.instructionTitle}>Como usar:</Text>
-          <Text style={styles.instructionText}>
+        <View style={[styles.instructionContainer, { backgroundColor: colors.card }] }>
+          <Text style={[styles.instructionTitle, { color: colors.text }]}>Como usar:</Text>
+          <Text style={[styles.instructionText, { color: colors.mutedText }] }>
             1. Encontre seus códigos de recuperação salvos
           </Text>
           <Text style={styles.instructionText}>
@@ -109,7 +111,7 @@ const RecoveryCodeScreen: React.FC<RecoveryCodeScreenProps> = ({
         </View>
 
         <TextInput
-          style={styles.codeInput}
+          style={[styles.codeInput, { backgroundColor: colors.card, borderColor: colors.primary, color: colors.text }]}
           placeholder="ABCD1234"
           value={recoveryCode}
           onChangeText={(text) => setRecoveryCode(text.toUpperCase())}
@@ -120,13 +122,13 @@ const RecoveryCodeScreen: React.FC<RecoveryCodeScreenProps> = ({
         />
 
         {attempts > 0 && (
-          <Text style={styles.attemptsText}>
+          <Text style={[styles.attemptsText, { color: colors.danger }] }>
             Tentativas: {attempts}/3
           </Text>
         )}
 
         <TouchableOpacity
-          style={[styles.verifyButton, loading && styles.buttonDisabled]}
+          style={[styles.verifyButton, { backgroundColor: colors.primary }, loading && styles.buttonDisabled]}
           onPress={handleRecoveryCode}
           disabled={loading || recoveryCode.length !== 8}
         >
@@ -137,13 +139,13 @@ const RecoveryCodeScreen: React.FC<RecoveryCodeScreenProps> = ({
           )}
         </TouchableOpacity>
 
-        <View style={styles.helpContainer}>
-          <Text style={styles.helpTitle}>Não tem seus códigos?</Text>
-          <Text style={styles.helpText}>
+        <View style={[styles.helpContainer, { backgroundColor: colors.card }] }>
+          <Text style={[styles.helpTitle, { color: colors.text }]}>Não tem seus códigos?</Text>
+          <Text style={[styles.helpText, { color: colors.mutedText }] }>
             Se você perdeu seus códigos de recuperação, entre em contato com o suporte para recuperar o acesso à sua conta.
           </Text>
           <TouchableOpacity 
-            style={styles.supportButton}
+            style={[styles.supportButton, { backgroundColor: '#03A9F4' }]}
             onPress={() => {
               Alert.alert(
                 'Suporte',
@@ -156,7 +158,7 @@ const RecoveryCodeScreen: React.FC<RecoveryCodeScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
+        <TouchableOpacity style={[styles.cancelButton, { backgroundColor: colors.card }]} onPress={onCancel}>
           <Text style={styles.cancelButtonText}>Voltar</Text>
         </TouchableOpacity>
       </View>

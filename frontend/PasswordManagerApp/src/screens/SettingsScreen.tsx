@@ -13,6 +13,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../contexts/ThemeContext';
 import { useAuthenticatedSettings } from '../hooks/useAuthenticatedSettings';
 import { useTwoFactor } from '../hooks/useTwoFactor';
 import { LOCK_TIMEOUT_OPTIONS } from '../types/settings';
@@ -34,6 +35,7 @@ interface SettingsScreenProps {
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToHome, onNavigateTo2FASetup, user }) => {
   const { settings, updateSettings, loading } = useAuthenticatedSettings(true);
+  const { colors } = useTheme();
   const { status: twoFactorStatus, loadStatus, disable2FA } = useTwoFactor();
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
   const [show2FAModal, setShow2FAModal] = useState(false);
@@ -280,29 +282,40 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
     </TouchableOpacity>
   );
 
+  const isDarkTheme = (settings as any).theme !== 'light';
+
+  const switchTrackColor = {
+    false: isDarkTheme ? '#3A3A3A' : '#E0E0E0',
+    true: '#6200EE',
+  };
+  const switchThumbColorOn = isDarkTheme ? '#B0B0B0' : '#FFFFFF';
+  const switchThumbColorOff = isDarkTheme ? '#757575' : '#FFFFFF';
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onNavigateToHome}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card }]}>
+        <TouchableOpacity onPress={onNavigateToHome} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Configurações</Text>
-        <Text style={styles.subtitle}>
-          {user.firstName} {user.lastName}
-        </Text>
-        <Text style={styles.email}>{user.email}</Text>
+        <View>
+          <Text style={[styles.title, { color: colors.text }]}>Configurações</Text>
+          <Text style={[styles.subtitle, { color: colors.text }]}>
+            {user.firstName} {user.lastName}
+          </Text>
+          <Text style={[styles.email, { color: colors.mutedText }]}>{user.email}</Text>
+        </View>
       </View>
 
       <View style={styles.content}>
         {/* Seção de Bloqueio Automático */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔒 Bloqueio Automático</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>🔒 Bloqueio Automático</Text>
           
           {/* Timeout de bloqueio */}
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: colors.card }]}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Tempo de bloqueio</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Tempo de bloqueio</Text>
+              <Text style={[styles.settingDescription, { color: colors.mutedText }]}>
                 Tempo de inatividade antes do bloqueio automático
               </Text>
             </View>
@@ -310,88 +323,88 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
               style={styles.settingValue}
               onPress={() => setShowTimeoutModal(true)}
             >
-              <Text style={styles.settingValueText}>{getCurrentTimeoutLabel()}</Text>
+              <Text style={[styles.settingValueText, { color: colors.primary }]}>{getCurrentTimeoutLabel()}</Text>
               <Ionicons name="chevron-forward" size={20} color="#666" />
             </TouchableOpacity>
           </View>
 
           {/* Bloquear ao sair do foco */}
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: colors.card }] }>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Bloquear ao sair do foco</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Bloquear ao sair do foco</Text>
+              <Text style={[styles.settingDescription, { color: colors.mutedText }] }>
                 Bloquear automaticamente quando o app sair do foco
               </Text>
             </View>
             <Switch
               value={settings.lockOnBackground}
               onValueChange={(value) => handleLockSettingChange('lockOnBackground', value)}
-              trackColor={{ false: '#3A3A3A', true: '#4ECDC4' }}
-              thumbColor={settings.lockOnBackground ? '#fff' : '#666'}
+              trackColor={switchTrackColor}
+              thumbColor={settings.lockOnBackground ? switchThumbColorOn : switchThumbColorOff}
             />
           </View>
 
           {/* Bloquear ao desligar tela */}
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: colors.card }] }>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Bloquear ao desligar tela</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Bloquear ao desligar tela</Text>
+              <Text style={[styles.settingDescription, { color: colors.mutedText }]}>
                 Bloquear automaticamente quando a tela for desligada
               </Text>
             </View>
             <Switch
               value={settings.lockOnScreenOff}
               onValueChange={(value) => handleLockSettingChange('lockOnScreenOff', value)}
-              trackColor={{ false: '#3A3A3A', true: '#4ECDC4' }}
-              thumbColor={settings.lockOnScreenOff ? '#fff' : '#666'}
+              trackColor={switchTrackColor}
+              thumbColor={settings.lockOnScreenOff ? switchThumbColorOn : switchThumbColorOff}
             />
           </View>
         </View>
 
         {/* Seção de Autenticação */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔐 Autenticação</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>🔐 Autenticação</Text>
           
           {/* Biometria */}
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: colors.card }] }>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Autenticação biométrica</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Autenticação biométrica</Text>
+              <Text style={[styles.settingDescription, { color: colors.mutedText }]}>
                 Usar impressão digital para TODOS os logins e desbloqueios
               </Text>
             </View>
             <Switch
               value={settings.biometricEnabled}
               onValueChange={handleBiometricSettingChange}
-              trackColor={{ false: '#3A3A3A', true: '#4ECDC4' }}
-              thumbColor={settings.biometricEnabled ? '#fff' : '#666'}
+              trackColor={switchTrackColor}
+              thumbColor={settings.biometricEnabled ? switchThumbColorOn : switchThumbColorOff}
             />
           </View>
 
           {/* Requer senha no desbloqueio */}
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: colors.card }] }>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Requer senha no desbloqueio</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Requer senha no desbloqueio</Text>
+              <Text style={[styles.settingDescription, { color: colors.mutedText }]}>
                 Sempre exigir senha para desbloquear o aplicativo
               </Text>
             </View>
             <Switch
               value={settings.requirePasswordOnLock}
               onValueChange={(value) => handleLockSettingChange('requirePasswordOnLock', value)}
-              trackColor={{ false: '#3A3A3A', true: '#4ECDC4' }}
-              thumbColor={settings.requirePasswordOnLock ? '#fff' : '#666'}
+              trackColor={switchTrackColor}
+              thumbColor={settings.requirePasswordOnLock ? switchThumbColorOn : switchThumbColorOff}
             />
           </View>
 
           {/* Senha Mestra */}
           <TouchableOpacity 
-            style={styles.settingItem}
+            style={[styles.settingItem, { backgroundColor: colors.card }] }
             onPress={() => setShowMasterPasswordModal(true)}
           >
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Senha Mestra</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Senha Mestra</Text>
+              <Text style={[styles.settingDescription, { color: colors.mutedText }]}>
                 Configurar senha para acessar notas seguras
               </Text>
             </View>
@@ -399,10 +412,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
           </TouchableOpacity>
 
           {/* 2FA - Autenticação em Dois Fatores */}
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: colors.card }] }>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Autenticação em Dois Fatores (2FA)</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Autenticação em Dois Fatores (2FA)</Text>
+              <Text style={[styles.settingDescription, { color: colors.mutedText }]}>
                 {twoFactorStatus?.email?.enabled 
                   ? '2FA ativado - Proteção adicional ativa'
                   : 'Adicione uma camada extra de segurança'
@@ -425,34 +438,55 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
 
         {/* Informações de Segurança */}
         <View style={styles.infoSection}>
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: colors.card }] }>
             <Ionicons name="shield-checkmark" size={24} color="#4ECDC4" />
             <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>Segurança Ativa</Text>
-              <Text style={styles.infoDescription}>
+              <Text style={[styles.infoTitle, { color: colors.text }]}>Segurança Ativa</Text>
+              <Text style={[styles.infoDescription, { color: colors.mutedText }]}>
                 Seu aplicativo está protegido com bloqueio automático e criptografia AES-256.
               </Text>
             </View>
           </View>
         </View>
 
+        {/* Tema (Claro/Escuro) */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>🎨 Aparência</Text>
+          <View style={[styles.settingItem, { backgroundColor: colors.card }] }>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Tema escuro</Text>
+              <Text style={[styles.settingDescription, { color: colors.mutedText }] }>
+                Alternar entre tema claro e escuro (salvo por usuário)
+              </Text>
+            </View>
+            <Switch
+              value={isDarkTheme}
+              onValueChange={async (value) => {
+                await updateSettings({ theme: value ? 'dark' : 'light' });
+              }}
+              trackColor={switchTrackColor}
+              thumbColor={isDarkTheme ? switchThumbColorOn : switchThumbColorOff}
+            />
+          </View>
+        </View>
+
         {/* Informações do App */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📱 Sobre o App</Text>
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoText}>Versão: 1.0.0</Text>
-            <Text style={styles.infoText}>Desenvolvido com React Native</Text>
-            <Text style={styles.infoText}>Backend: Node.js + PostgreSQL</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>📱 Sobre o App</Text>
+          <View style={[styles.infoContainer, { backgroundColor: colors.card }] }>
+            <Text style={[styles.infoText, { color: colors.mutedText }]}>Versão: 1.0.0</Text>
+            <Text style={[styles.infoText, { color: colors.mutedText }]}>Desenvolvido com React Native</Text>
+            <Text style={[styles.infoText, { color: colors.mutedText }]}>Backend: Node.js + PostgreSQL</Text>
           </View>
         </View>
 
         {/* Exportação de Dados */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⬇️ Exportação</Text>
-          <TouchableOpacity style={styles.settingItem} onPress={() => setShowExportModal(true)}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>⬇️ Exportação</Text>
+          <TouchableOpacity style={[styles.settingItem, { backgroundColor: colors.card }] } onPress={() => setShowExportModal(true)}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Exportar dados (JSON)</Text>
-              <Text style={styles.settingDescription}>Requer senha mestra para descriptografar e exportar</Text>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Exportar dados (JSON)</Text>
+              <Text style={[styles.settingDescription, { color: colors.mutedText }]}>Requer senha mestra para descriptografar e exportar</Text>
             </View>
             <Ionicons name="download" size={20} color="#4ECDC4" />
           </TouchableOpacity>

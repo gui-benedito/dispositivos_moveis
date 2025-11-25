@@ -11,6 +11,7 @@ export interface UserSettings {
   requirePasswordOnLock: boolean;
   lockOnBackground: boolean;
   lockOnScreenOff: boolean;
+  theme?: 'light' | 'dark';
   createdAt: string;
   updatedAt: string;
 }
@@ -22,6 +23,7 @@ export interface UpdateSettingsRequest {
   requirePasswordOnLock?: boolean;
   lockOnBackground?: boolean;
   lockOnScreenOff?: boolean;
+  theme?: 'light' | 'dark';
 }
 
 export interface SettingsApiResponse {
@@ -47,6 +49,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   requirePasswordOnLock: true,
   lockOnBackground: true,
   lockOnScreenOff: true,
+  theme: 'dark',
   createdAt: '',
   updatedAt: ''
 };

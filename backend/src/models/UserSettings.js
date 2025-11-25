@@ -43,6 +43,11 @@ const UserSettings = sequelize.define('UserSettings', {
   lockOnScreenOff: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  theme: {
+    type: DataTypes.ENUM('light', 'dark'),
+    allowNull: false,
+    defaultValue: 'dark'
   }
 }, {
   tableName: 'user_settings',

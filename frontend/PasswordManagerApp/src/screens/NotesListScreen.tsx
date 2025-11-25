@@ -14,12 +14,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNotes } from '../hooks/useNotes';
 import { Note } from '../types/note';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface NotesListScreenProps {
   navigation: any;
 }
 
 const NotesListScreen: React.FC<NotesListScreenProps> = ({ navigation }) => {
+  const { colors } = useTheme();
   const {
     notes,
     loading,
@@ -220,17 +222,17 @@ const NotesListScreen: React.FC<NotesListScreenProps> = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }] }>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }] }>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Notas Seguras</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Notas Seguras</Text>
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('NoteEditor')}
         >
           <Ionicons name="add" size={24} color="white" />
@@ -238,10 +240,10 @@ const NotesListScreen: React.FC<NotesListScreenProps> = ({ navigation }) => {
       </View>
 
       {/* Barra de busca */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }] }>
+        <Ionicons name="search" size={20} color={colors.mutedText} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Buscar notas..."
           value={searchTerm}
           onChangeText={setSearchTerm}
@@ -256,19 +258,77 @@ const NotesListScreen: React.FC<NotesListScreenProps> = ({ navigation }) => {
             }}
             style={styles.clearButton}
           >
-            <Ionicons name="close" size={20} color="#666" />
+            <Ionicons name="close" size={20} color={colors.mutedText} />
           </TouchableOpacity>
         )}
       </View>
 
       {/* Filtros */}
-      {renderFilters()}
+      {/* Filtros */}
+      <View style={styles.filtersContainer}>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            { backgroundColor: colors.card, borderColor: colors.border },
+            filter === 'all' && { backgroundColor: colors.primary, borderColor: colors.primary }
+          ]}
+          onPress={() => applyFilter('all')}
+        >
+          <Text
+            style={[
+              styles.filterText,
+              { color: colors.mutedText },
+              filter === 'all' && { color: '#fff' }
+            ]}
+          >
+            Todas ({stats?.total || 0})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            { backgroundColor: colors.card, borderColor: colors.border },
+            filter === 'secure' && { backgroundColor: colors.primary, borderColor: colors.primary }
+          ]}
+          onPress={() => applyFilter('secure')}
+        >
+          <Text
+            style={[
+              styles.filterText,
+              { color: colors.mutedText },
+              filter === 'secure' && { color: '#fff' }
+            ]}
+          >
+            Seguras ({stats?.secure || 0})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            { backgroundColor: colors.card, borderColor: colors.border },
+            filter === 'favorites' && { backgroundColor: colors.primary, borderColor: colors.primary }
+          ]}
+          onPress={() => applyFilter('favorites')}
+        >
+          <Text
+            style={[
+              styles.filterText,
+              { color: colors.mutedText },
+              filter === 'favorites' && { color: '#fff' }
+            ]}
+          >
+            Favoritas ({stats?.favorites || 0})
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Lista de notas */}
       {loading && !isSearching ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4ECDC4" />
-          <Text style={styles.loadingText}>Carregando notas...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.mutedText }]}>Carregando notas...</Text>
         </View>
       ) : (
         <FlatList
@@ -284,11 +344,11 @@ const NotesListScreen: React.FC<NotesListScreenProps> = ({ navigation }) => {
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="document-text-outline" size={64} color="#ccc" />
-              <Text style={styles.emptyText}>
+              <Ionicons name="document-text-outline" size={64} color={colors.mutedText} />
+              <Text style={[styles.emptyText, { color: colors.text }] }>
                 {searchTerm ? 'Nenhuma nota encontrada' : 'Nenhuma nota criada ainda'}
               </Text>
-              <Text style={styles.emptySubtext}>
+              <Text style={[styles.emptySubtext, { color: colors.mutedText }] }>
                 {searchTerm ? 'Tente uma busca diferente' : 'Toque no + para criar sua primeira nota'}
               </Text>
             </View>
@@ -299,7 +359,7 @@ const NotesListScreen: React.FC<NotesListScreenProps> = ({ navigation }) => {
 
       {/* Erro */}
       {error && (
-        <View style={styles.errorContainer}>
+        <View style={[styles.errorContainer, { backgroundColor: '#fee', borderColor: '#fcc' }] }>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity onPress={clearError} style={styles.errorButton}>
             <Text style={styles.errorButtonText}>Tentar novamente</Text>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import {
   View,
   Text,
@@ -13,11 +14,13 @@ import {
   Platform,
   Modal
 } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useBiometric } from '../hooks/useBiometric';
 import { useAuthenticatedSettings } from '../hooks/useAuthenticatedSettings';
 import { connectionManager } from '../services/connectionManager';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface LockScreenProps {
   onUnlock: () => void;
@@ -26,6 +29,7 @@ interface LockScreenProps {
 
 const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
   const [password, setPassword] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordInput, setShowPasswordInput] = useState(false);
@@ -35,7 +39,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
 
   const { authenticateBiometric } = useBiometric();
   const { settings } = useAuthenticatedSettings(true);
-
+  const { colors } = useTheme();
 
   // Verificar se biometria está disponível no sistema
   useEffect(() => {
@@ -210,10 +214,11 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
+      style={[styles.container, { backgroundColor: colors.background }]} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
+
         {/* Ícone animado */}
         <Animated.View 
           style={[
@@ -224,26 +229,30 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
           <Ionicons 
             name={getLockIcon()} 
             size={80} 
-            color="#FF6B6B" 
+            color={colors.primary} 
           />
+
         </Animated.View>
 
         {/* Título */}
-        <Text style={styles.title}>Aplicativo Bloqueado</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Aplicativo Bloqueado</Text>
+
         
         {/* Mensagem */}
-        <Text style={styles.message}>{getLockMessage()}</Text>
+        <Text style={[styles.message, { color: colors.mutedText }]}>{getLockMessage()}</Text>
 
         {/* Interface de desbloqueio */}
         {biometricLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color="#007AFF" size="large" />
-            <Text style={styles.loadingText}>Verificando biometria...</Text>
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={[styles.loadingText, { color: colors.mutedText }]}>Verificando biometria...</Text>
+
           </View>
         ) : settings.biometricEnabled && biometricAvailable ? (
           <View style={styles.biometricContainer}>
+
             <TouchableOpacity
-              style={styles.biometricMainButton}
+              style={[styles.biometricMainButton, { backgroundColor: colors.card, borderColor: colors.primary }]}
               onPress={handleBiometricUnlock}
               disabled={loading}
             >
@@ -254,12 +263,12 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
                   <Ionicons
                     name="finger-print"
                     size={60}
-                    color="#4ECDC4"
+                    color={colors.primary}
                   />
-                  <Text style={styles.biometricMainButtonText}>
+                  <Text style={[styles.biometricMainButtonText, { color: colors.primary }]}>
                     Toque para desbloquear
                   </Text>
-                  <Text style={styles.biometricSubText}>
+                  <Text style={[styles.biometricSubText, { color: colors.mutedText }]}>
                     Use sua impressão digital
                   </Text>
                 </>
@@ -269,9 +278,10 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
           </View>
         ) : (
           <View style={styles.passwordContainer}>
+
             <View style={styles.passwordInputContainer}>
               <TextInput
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: colors.text }]}
                 placeholder="Digite sua senha"
                 value={password}
                 onChangeText={setPassword}
@@ -288,13 +298,14 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
-                  color="#999"
+                  color={colors.mutedText}
                 />
+
               </TouchableOpacity>
             </View>
             
             <TouchableOpacity
-              style={[styles.unlockButton, loading && styles.unlockButtonDisabled]}
+              style={[styles.unlockButton, { backgroundColor: loading ? colors.mutedText : colors.primary }]}
               onPress={handlePasswordUnlock}
               disabled={loading}
             >
@@ -304,6 +315,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
                 <>
                   <Ionicons name="lock-open-outline" size={20} color="#fff" />
                   <Text style={styles.unlockButtonText}>Desbloquear</Text>
+
                 </>
               )}
             </TouchableOpacity>
@@ -320,19 +332,22 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
           >
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
+
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Digite sua senha</Text>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>Digite sua senha</Text>
+
                   <TouchableOpacity
                     style={styles.modalCloseButton}
                     onPress={() => setShowPasswordInput(false)}
                   >
-                    <Ionicons name="close" size={24} color="#999" />
+                    <Ionicons name="close" size={24} color={colors.mutedText} />
+
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.passwordInputContainer}>
                   <TextInput
-                    style={styles.passwordInput}
+                    style={[styles.passwordInput, { color: colors.text }]}
                     placeholder="Digite sua senha"
                     value={password}
                     onChangeText={setPassword}
@@ -349,13 +364,14 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
                     <Ionicons
                       name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                       size={24}
-                      color="#666"
+                      color={colors.mutedText}
                     />
+
                   </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.unlockButton, loading && styles.unlockButtonDisabled]}
+                  style={[styles.unlockButton, { backgroundColor: loading ? colors.mutedText : colors.primary }]}
                   onPress={handlePasswordUnlock}
                   disabled={loading}
                 >
@@ -365,6 +381,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
                     <>
                       <Ionicons name="lock-open-outline" size={20} color="#fff" />
                       <Text style={styles.unlockButtonText}>Desbloquear</Text>
+
                     </>
                   )}
                 </TouchableOpacity>
@@ -375,7 +392,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, lockReason }) => {
 
         {/* Informações adicionais */}
         <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoText, { color: colors.mutedText }]}>
             Para sua segurança, o aplicativo foi bloqueado automaticamente.
           </Text>
           <Text style={styles.infoText}>

@@ -44,7 +44,8 @@ class SettingsController {
           biometricEnabled: false,
           requirePasswordOnLock: true,
           lockOnBackground: true,
-          lockOnScreenOff: true
+          lockOnScreenOff: true,
+          theme: 'dark'
         });
 
         return res.json({
@@ -136,7 +137,8 @@ class SettingsController {
         biometricType,
         requirePasswordOnLock,
         lockOnBackground,
-        lockOnScreenOff
+        lockOnScreenOff,
+        theme
       } = req.body;
 
       const [settings, created] = await UserSettings.findOrCreate({
@@ -147,7 +149,8 @@ class SettingsController {
           biometricEnabled: false,
           requirePasswordOnLock: true,
           lockOnBackground: true,
-          lockOnScreenOff: true
+          lockOnScreenOff: true,
+          theme: 'dark'
         }
       });
 
@@ -158,7 +161,8 @@ class SettingsController {
         biometricType: biometricType ?? settings.biometricType,
         requirePasswordOnLock: requirePasswordOnLock ?? settings.requirePasswordOnLock,
         lockOnBackground: lockOnBackground ?? settings.lockOnBackground,
-        lockOnScreenOff: lockOnScreenOff ?? settings.lockOnScreenOff
+        lockOnScreenOff: lockOnScreenOff ?? settings.lockOnScreenOff,
+        theme: theme ?? settings.theme
       });
 
       res.json({
@@ -224,7 +228,8 @@ class SettingsController {
         biometricType: null,
         requirePasswordOnLock: true,
         lockOnBackground: true,
-        lockOnScreenOff: true
+        lockOnScreenOff: true,
+        theme: 'dark'
       });
 
       res.json({

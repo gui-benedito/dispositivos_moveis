@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useTwoFactor } from '../hooks/useTwoFactor';
 import { TwoFactorMethod } from '../types/twoFactor';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface TwoFactorVerificationScreenProps {
   method: TwoFactorMethod;
@@ -33,6 +34,7 @@ const TwoFactorVerificationScreen: React.FC<TwoFactorVerificationScreenProps> = 
     validateCode,
     clearError
   } = useTwoFactor();
+  const { colors } = useTheme();
 
   const [code, setCode] = useState('');
   const [attempts, setAttempts] = useState(0);
@@ -138,15 +140,15 @@ const TwoFactorVerificationScreen: React.FC<TwoFactorVerificationScreenProps> = 
 
   if (isLocked) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }] }>
         <View style={styles.lockedContainer}>
           <Text style={styles.lockedIcon}>🔒</Text>
-          <Text style={styles.lockedTitle}>2FA Temporariamente Bloqueado</Text>
-          <Text style={styles.lockedDescription}>
+          <Text style={[styles.lockedTitle, { color: colors.danger }]}>2FA Temporariamente Bloqueado</Text>
+          <Text style={[styles.lockedDescription, { color: colors.mutedText }] }>
             Muitas tentativas falhadas. Tente novamente em:
           </Text>
-          <Text style={styles.lockedTimer}>{formatTime(lockTime)}</Text>
-          <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
+          <Text style={[styles.lockedTimer, { color: colors.danger }]}>{formatTime(lockTime)}</Text>
+          <TouchableOpacity style={[styles.cancelButton, { backgroundColor: colors.primary }]} onPress={onCancel}>
             <Text style={styles.cancelButtonText}>Voltar ao Login</Text>
           </TouchableOpacity>
         </View>
@@ -156,18 +158,18 @@ const TwoFactorVerificationScreen: React.FC<TwoFactorVerificationScreenProps> = 
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
+      style={[styles.container, { backgroundColor: colors.background }]} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         <Text style={styles.icon}>{getMethodIcon()}</Text>
-        <Text style={styles.title}>Verificação em Dois Fatores</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.text }]}>Verificação em Dois Fatores</Text>
+        <Text style={[styles.subtitle, { color: colors.mutedText }]}>
           Digite o código de 6 dígitos enviado para seu {getMethodLabel()}
         </Text>
 
         <TextInput
-          style={styles.codeInput}
+          style={[styles.codeInput, { backgroundColor: colors.card, borderColor: colors.primary, color: colors.text }]}
           placeholder="000000"
           value={code}
           onChangeText={setCode}
@@ -179,13 +181,13 @@ const TwoFactorVerificationScreen: React.FC<TwoFactorVerificationScreenProps> = 
         />
 
         {attempts > 0 && (
-          <Text style={styles.attemptsText}>
+          <Text style={[styles.attemptsText, { color: colors.danger }] }>
             Tentativas: {attempts}/3
           </Text>
         )}
 
         <TouchableOpacity
-          style={[styles.verifyButton, loading && styles.buttonDisabled]}
+          style={[styles.verifyButton, { backgroundColor: colors.primary }, loading && styles.buttonDisabled]}
           onPress={handleVerification}
           disabled={loading || code.length !== 6}
         >

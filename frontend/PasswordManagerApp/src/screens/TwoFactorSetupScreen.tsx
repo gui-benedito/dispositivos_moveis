@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useTwoFactor } from '../hooks/useTwoFactor';
 import { TwoFactorMethod } from '../types/twoFactor';
+import { useTheme } from '../contexts/ThemeContext';
 // Removido QRCode - usando apenas app autenticador ou SMS
 
 interface TwoFactorSetupScreenProps {
@@ -34,6 +35,7 @@ const TwoFactorSetupScreen: React.FC<TwoFactorSetupScreenProps> = ({
     formatPhoneNumber,
     clearError
   } = useTwoFactor();
+  const { colors } = useTheme();
 
   const [step, setStep] = useState<'method' | 'setup' | 'verify'>('setup');
   const [selectedMethod, setSelectedMethod] = useState<TwoFactorMethod>('email');
@@ -102,21 +104,21 @@ const TwoFactorSetupScreen: React.FC<TwoFactorSetupScreenProps> = ({
 
 
   const renderSetup = () => (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }] }>
+      <Text style={[styles.title, { color: colors.text }] }>
         Configurar Email
       </Text>
 
 
       {selectedMethod === 'email' && (
         <View style={styles.emailSetup}>
-          <Text style={styles.instructionText}>
+          <Text style={[styles.instructionText, { color: colors.mutedText }] }>
             Códigos de verificação serão enviados para seu email
           </Text>
 
           {setupData?.email && (
             <View style={styles.emailConfirmation}>
-              <Text style={styles.emailConfirmationText}>
+              <Text style={[styles.emailConfirmationText, { color: colors.mutedText }] }>
                 📧 Códigos serão enviados para: {setupData.email}
               </Text>
             </View>
@@ -125,7 +127,7 @@ const TwoFactorSetupScreen: React.FC<TwoFactorSetupScreenProps> = ({
       )}
 
       <TouchableOpacity
-        style={[styles.continueButton, loading && styles.buttonDisabled]}
+        style={[styles.continueButton, { backgroundColor: colors.primary }, loading && styles.buttonDisabled]}
         onPress={handleSetup}
         disabled={loading}
       >
@@ -136,21 +138,21 @@ const TwoFactorSetupScreen: React.FC<TwoFactorSetupScreenProps> = ({
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.backButton} onPress={onCancel}>
+      <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={onCancel}>
         <Text style={styles.backButtonText}>Cancelar</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 
   const renderVerification = () => (
-    <View style={styles.container}>
-      <Text style={styles.title}>Verificar Código</Text>
-      <Text style={styles.subtitle}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Verificar Código</Text>
+      <Text style={[styles.subtitle, { color: colors.mutedText }]}>
         Digite o código de 6 dígitos do seu Email
       </Text>
 
       <TextInput
-        style={styles.codeInput}
+        style={[styles.codeInput, { backgroundColor: colors.card, borderColor: colors.primary, color: colors.text }]}
         placeholder="000000"
         value={verificationCode}
         onChangeText={setVerificationCode}
@@ -160,7 +162,7 @@ const TwoFactorSetupScreen: React.FC<TwoFactorSetupScreenProps> = ({
       />
 
       <TouchableOpacity
-        style={[styles.verifyButton, loading && styles.buttonDisabled]}
+        style={[styles.verifyButton, { backgroundColor: colors.primary }, loading && styles.buttonDisabled]}
         onPress={handleVerification}
         disabled={loading}
       >
@@ -171,14 +173,14 @@ const TwoFactorSetupScreen: React.FC<TwoFactorSetupScreenProps> = ({
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.backButton} onPress={() => setStep('setup')}>
+      <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={() => setStep('setup')}>
         <Text style={styles.backButtonText}>Voltar</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {step === 'setup' && renderSetup()}
       {step === 'verify' && renderVerification()}
     </View>

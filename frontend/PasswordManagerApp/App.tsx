@@ -15,6 +15,7 @@ import BackupManagementScreen from './src/screens/BackupManagementScreen';
 import SimpleBackupScreen from './src/screens/SimpleBackupScreen';
 import { AppLockProvider } from './src/components/AppLockProvider';
 import { SettingsProvider } from './src/contexts/SettingsContext';
+import { ThemeProvider } from './src/contexts/ThemeContext';
 import { AuthTokens, User } from './src/types/auth';
 
 export default function App() {
@@ -149,8 +150,9 @@ export default function App() {
 
   return (
     <SettingsProvider>
-      <NavigationContainer>
-        <StatusBar style="auto" />
+      <ThemeProvider>
+        <NavigationContainer>
+          <StatusBar style="auto" />
         {isAuthenticated && user ? (
           <AppLockProvider isAuthenticated={isAuthenticated}>
             {currentScreen === 'home' ? (
@@ -239,7 +241,8 @@ export default function App() {
         ) : (
           <AuthNavigator onAuthSuccess={handleAuthSuccess} />
         )}
-      </NavigationContainer>
+        </NavigationContainer>
+      </ThemeProvider>
     </SettingsProvider>
   );
 }

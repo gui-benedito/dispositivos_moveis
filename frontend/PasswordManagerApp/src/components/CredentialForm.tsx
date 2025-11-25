@@ -13,6 +13,7 @@ import {
   Platform,
   Modal,
 } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
 import { useCredentialForm, usePasswordGenerator } from '../hooks/useCredentials';
 import { Ionicons } from '@expo/vector-icons';
 import { CredentialService } from '../services/credentialService';
@@ -66,6 +67,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
     clearGeneratedPassword,
     loading: generatorLoading
   } = usePasswordGenerator();
+  const { colors } = useTheme();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showMasterPassword, setShowMasterPassword] = useState(false);
@@ -213,18 +215,18 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
+      style={[styles.container, { backgroundColor: colors.background }]} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.primary }] }>
           <Text style={styles.title}>{title}</Text>
         </View>
 
-        <View style={styles.form}>
+        <View style={[styles.form, { backgroundColor: colors.card }]}>
           {/* Título */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Título *</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Título *</Text>
             <TextInput
               style={[styles.input, errors.title && styles.inputError]}
               value={formData.title}
@@ -240,7 +242,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
 
           {/* Descrição */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Descrição</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Descrição</Text>
             <TextInput
               style={[styles.input, styles.textArea, errors.description && styles.inputError]}
               value={formData.description}
@@ -258,7 +260,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
 
           {/* Categoria */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Categoria *</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Categoria *</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TouchableOpacity
                 style={[styles.input, { flex: 1, justifyContent: 'center' }, errors.category && styles.inputError]}
@@ -271,9 +273,9 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
                     return (
                       <>
                         {meta?.icon ? (
-                          <Ionicons name={meta.icon as any} size={16} color={meta?.color || '#555'} style={{ marginRight: 6 }} />
+                          <Ionicons name={meta.icon as any} size={16} color={meta?.color || colors.mutedText} style={{ marginRight: 6 }} />
                         ) : null}
-                        <Text style={{ color: formData.category ? '#333' : '#999' }}>
+                        <Text style={{ color: formData.category ? colors.text : colors.mutedText }}>
                           {formData.category || 'Selecionar categoria cadastrada'}
                         </Text>
                       </>
@@ -292,7 +294,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
               <Text style={styles.errorText}>{errors.category}</Text>
             )}
             {!!categories && categories.length > 0 && (
-              <Text style={{ marginTop: 6, color: '#888', fontSize: 12 }}>
+              <Text style={{ marginTop: 6, color: colors.mutedText, fontSize: 12 }}>
                 {`Você tem ${categories.length} categorias cadastradas`}
               </Text>
             )}
@@ -305,13 +307,13 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
                       paddingHorizontal: 10,
                       paddingVertical: 6,
                       borderRadius: 16,
-                      backgroundColor: '#ecf0f1',
+                      backgroundColor: colors.card,
                       marginRight: 8,
                       marginBottom: 8
                     }}
                     onPress={() => updateField('category', c.name)}
                   >
-                    <Text style={{ color: '#333' }}>{c.name}</Text>
+                    <Text style={{ color: colors.text }}>{c.name}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -320,7 +322,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
 
           {/* Username */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Nome de usuário</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Nome de usuário</Text>
             <TextInput
               style={[styles.input, errors.username && styles.inputError]}
               value={formData.username}
@@ -339,7 +341,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
           {/* Senha */}
           <View style={styles.inputContainer}>
             <View style={styles.passwordHeader}>
-              <Text style={styles.label}>Senha *</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Senha *</Text>
               <TouchableOpacity
                 style={styles.generateButton}
                 onPress={() => setShowPasswordGenerator(!showPasswordGenerator)}
@@ -494,7 +496,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
 
           {/* Notas */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Notas</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Notas</Text>
             <TextInput
               style={[styles.input, styles.textArea, errors.notes && styles.inputError]}
               value={formData.notes}
@@ -512,7 +514,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
 
           {/* Senha mestre */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Senha Mestre *</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Senha Mestre *</Text>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={[styles.input, styles.passwordInput, errors.masterPassword && styles.inputError]}
@@ -543,13 +545,13 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
           {/* Favorito */}
           <View style={styles.inputContainer}>
             <View style={styles.favoriteContainer}>
-              <Text style={styles.label}>Marcar como favorito</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Marcar como favorito</Text>
               <Switch
                 value={formData.isFavorite}
                 onValueChange={(value) => updateField('isFavorite', value)}
                 disabled={loading}
-                trackColor={{ false: '#bdc3c7', true: '#3498db' }}
-                thumbColor={formData.isFavorite ? '#fff' : '#f4f3f4'}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={formData.isFavorite ? '#FFFFFF' : colors.card}
               />
             </View>
           </View>
@@ -586,9 +588,9 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
         presentationStyle="pageSheet"
         onRequestClose={() => setShowCategoryManager(false)}
       >
-        <View style={styles.categoryModalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Gerenciar Categorias</Text>
+        <View style={[styles.categoryModalContainer, { backgroundColor: colors.background }] }>
+          <View style={[styles.modalHeader, { backgroundColor: colors.card }] }>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Gerenciar Categorias</Text>
             <TouchableOpacity style={styles.closeButton} onPress={() => setShowCategoryManager(false)}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
@@ -618,7 +620,7 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
                 />
               ))}
               {userCategories.length === 0 && !catLoading && (
-                <Text style={{ color: '#666' }}>Nenhuma categoria criada ainda.</Text>
+                <Text style={{ color: colors.mutedText }}>Nenhuma categoria criada ainda.</Text>
               )}
             </View>
           </ScrollView>
@@ -632,9 +634,9 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
         presentationStyle="pageSheet"
         onRequestClose={() => setShowCategorySelect(false)}
       >
-        <View style={styles.categoryModalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Selecionar Categoria</Text>
+        <View style={[styles.categoryModalContainer, { backgroundColor: colors.background }] }>
+          <View style={[styles.modalHeader, { backgroundColor: colors.card }] }>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Selecionar Categoria</Text>
             <TouchableOpacity style={styles.closeButton} onPress={() => setShowCategorySelect(false)}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
@@ -643,17 +645,17 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
             {userCategories.map((c) => (
               <TouchableOpacity
                 key={c.id}
-                style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}
+                style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}
                 onPress={() => { updateField('category', c.name); setShowCategorySelect(false); }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  {c.icon ? <Ionicons name={c.icon as any} size={18} color={c.color || '#555'} style={{ marginRight: 8 }} /> : null}
-                  <Text style={{ fontSize: 16 }}>{c.name}</Text>
+                  {c.icon ? <Ionicons name={c.icon as any} size={18} color={c.color || colors.mutedText} style={{ marginRight: 8 }} /> : null}
+                  <Text style={{ fontSize: 16, color: colors.text }}>{c.name}</Text>
                 </View>
               </TouchableOpacity>
             ))}
             {userCategories.length === 0 && (
-              <Text style={{ color: '#666' }}>Nenhuma categoria cadastrada.</Text>
+              <Text style={{ color: colors.mutedText }}>Nenhuma categoria cadastrada.</Text>
             )}
           </ScrollView>
         </View>
