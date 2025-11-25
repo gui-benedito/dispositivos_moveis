@@ -1,6 +1,7 @@
 const { User } = require('../models');
 const BackupService = require('../services/backupService');
 const CloudProviderService = require('../services/cloudProviderService');
+const cryptoService = require('../services/cryptoService');
 
 class BackupController {
   /**
@@ -67,11 +68,35 @@ class BackupController {
         });
       }
 
-      // 1. Trocar código por token
+      // 1. Validar senha mestra centralizada
+      const user = await User.findByPk(userId);
+      if (!user || !user.masterKeyHash || !user.masterKeySalt) {
+        return res.status(400).json({
+          success: false,
+          message: 'Senha mestra não configurada',
+          code: 'MASTER_PASSWORD_NOT_CONFIGURED'
+        });
+      }
+
+      const isValidMaster = await cryptoService.verifyMasterPassword(
+        masterPassword,
+        user.masterKeyHash,
+        user.masterKeySalt
+      );
+
+      if (!isValidMaster) {
+        return res.status(401).json({
+          success: false,
+          message: 'Senha mestra incorreta',
+          code: 'INVALID_MASTER_PASSWORD'
+        });
+      }
+
+      // 2. Trocar código por token
       const tokenData = await CloudProviderService.exchangeCodeForToken(provider, code, state);
       console.log('✅ Token obtido com sucesso');
 
-      // 2. Criar backup
+      // 3. Criar backup
       const backupResult = await BackupService.createBackup(
         userId,
         provider,
@@ -122,6 +147,30 @@ class BackupController {
         });
       }
 
+      // Validar senha mestra centralizada
+      const user = await User.findByPk(userId);
+      if (!user || !user.masterKeyHash || !user.masterKeySalt) {
+        return res.status(400).json({
+          success: false,
+          message: 'Senha mestra não configurada',
+          code: 'MASTER_PASSWORD_NOT_CONFIGURED'
+        });
+      }
+
+      const isValidMaster = await cryptoService.verifyMasterPassword(
+        masterPassword,
+        user.masterKeyHash,
+        user.masterKeySalt
+      );
+
+      if (!isValidMaster) {
+        return res.status(401).json({
+          success: false,
+          message: 'Senha mestra incorreta',
+          code: 'INVALID_MASTER_PASSWORD'
+        });
+      }
+
       const backupResult = await BackupService.createBackup(
         userId,
         provider,
@@ -165,6 +214,30 @@ class BackupController {
           success: false,
           message: 'Provedor, token de acesso, ID do arquivo e senha mestra são obrigatórios',
           code: 'MISSING_REQUIRED_FIELDS'
+        });
+      }
+
+      // Validar senha mestra centralizada
+      const user = await User.findByPk(userId);
+      if (!user || !user.masterKeyHash || !user.masterKeySalt) {
+        return res.status(400).json({
+          success: false,
+          message: 'Senha mestra não configurada',
+          code: 'MASTER_PASSWORD_NOT_CONFIGURED'
+        });
+      }
+
+      const isValidMaster = await cryptoService.verifyMasterPassword(
+        masterPassword,
+        user.masterKeyHash,
+        user.masterKeySalt
+      );
+
+      if (!isValidMaster) {
+        return res.status(401).json({
+          success: false,
+          message: 'Senha mestra incorreta',
+          code: 'INVALID_MASTER_PASSWORD'
         });
       }
 

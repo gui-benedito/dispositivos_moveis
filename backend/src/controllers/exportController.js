@@ -1,4 +1,4 @@
-const { Credential, Note } = require('../models');
+const { Credential, Note, User } = require('../models');
 const cryptoService = require('../services/cryptoService');
 const NoteCryptoService = require('../services/noteCryptoService');
 
@@ -11,15 +11,30 @@ class ExportController {
         return res.status(400).json({ success: false, message: 'Senha mestre é obrigatória', code: 'MASTER_PASSWORD_REQUIRED' });
       }
 
-      const credentials = await Credential.findAll({ where: { userId, isActive: true } });
-
-      if (credentials.length > 0) {
-        const first = credentials[0];
-        const isValid = await cryptoService.verifyMasterPassword(masterPassword, first.encryptionKey, first.salt);
-        if (!isValid) {
-          return res.status(401).json({ success: false, message: 'Senha mestre incorreta', code: 'INVALID_MASTER_PASSWORD' });
-        }
+      const user = await User.findByPk(userId);
+      if (!user || !user.masterKeyHash || !user.masterKeySalt) {
+        return res.status(400).json({
+          success: false,
+          message: 'Senha mestra não configurada',
+          code: 'MASTER_PASSWORD_NOT_CONFIGURED'
+        });
       }
+
+      const isValidMaster = await cryptoService.verifyMasterPassword(
+        masterPassword,
+        user.masterKeyHash,
+        user.masterKeySalt
+      );
+
+      if (!isValidMaster) {
+        return res.status(401).json({
+          success: false,
+          message: 'Senha mestra incorreta',
+          code: 'INVALID_MASTER_PASSWORD'
+        });
+      }
+
+      const credentials = await Credential.findAll({ where: { userId, isActive: true } });
 
       const exportedCredentials = [];
       for (const cred of credentials) {

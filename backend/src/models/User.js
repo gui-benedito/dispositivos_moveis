@@ -100,6 +100,14 @@ const User = sequelize.define('User', {
   backupCodes: {
     type: DataTypes.JSON,
     allowNull: true
+  },
+  masterKeySalt: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  masterKeyHash: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   tableName: 'users',

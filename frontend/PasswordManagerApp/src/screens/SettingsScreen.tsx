@@ -17,6 +17,7 @@ import { useAuthenticatedSettings } from '../hooks/useAuthenticatedSettings';
 import { useTwoFactor } from '../hooks/useTwoFactor';
 import { LOCK_TIMEOUT_OPTIONS } from '../types/settings';
 import { ExportService } from '../services/exportService';
+import { SecurityService } from '../services/securityService';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 
@@ -40,6 +41,49 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportPassword, setExportPassword] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [currentMasterPassword, setCurrentMasterPassword] = useState('');
+  const [newMasterPassword, setNewMasterPassword] = useState('');
+  const [confirmMasterPassword, setConfirmMasterPassword] = useState('');
+  const [savingMasterPassword, setSavingMasterPassword] = useState(false);
+
+  /**
+   * Definir ou alterar senha mestra unificada
+   */
+  const handleSaveMasterPassword = async () => {
+    if (!newMasterPassword.trim() || newMasterPassword.length < 8) {
+      Alert.alert('Senha fraca', 'A nova senha mestra deve ter pelo menos 8 caracteres.');
+      return;
+    }
+
+    if (newMasterPassword !== confirmMasterPassword) {
+      Alert.alert('Atenção', 'A confirmação da senha mestra não confere.');
+      return;
+    }
+
+    try {
+      setSavingMasterPassword(true);
+      const resp = await SecurityService.setMasterPassword({
+        currentPassword: currentMasterPassword || undefined,
+        newPassword: newMasterPassword,
+        confirmPassword: confirmMasterPassword
+      });
+
+      if (!resp.success) {
+        Alert.alert('Erro', resp.message || 'Falha ao salvar senha mestra');
+        return;
+      }
+
+      Alert.alert('Sucesso', resp.message || 'Senha mestra atualizada com sucesso');
+      setShowMasterPasswordModal(false);
+      setCurrentMasterPassword('');
+      setNewMasterPassword('');
+      setConfirmMasterPassword('');
+    } catch (e: any) {
+      Alert.alert('Erro', e?.message || 'Erro ao salvar senha mestra');
+    } finally {
+      setSavingMasterPassword(false);
+    }
+  };
 
   /**
    * Exportar dados (JSON) com senha mestra para arquivo e compartilhar
@@ -555,28 +599,68 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
 
             <Text style={styles.modalTitle}>Configurar Senha Mestra</Text>
             <Text style={styles.modalDescription}>
-              A senha mestra é usada para proteger suas notas seguras. 
-              Escolha uma senha forte e memorize-a bem.
+              A senha mestra será usada para proteger e acessar seus dados sensíveis, backups e exportações.
             </Text>
 
-            <View style={styles.featureList}>
-              <Text style={styles.featureItem}>🔐 Protege notas criptografadas</Text>
-              <Text style={styles.featureItem}>🛡️ Acesso adicional de segurança</Text>
-              <Text style={styles.featureItem}>🔒 Diferente da senha de login</Text>
-            </View>
+            <Text style={{ marginTop: 12, marginBottom: 4, color: '#333', fontWeight: '500' }}>Senha Mestra Atual (opcional)</Text>
+            <TextInput
+              value={currentMasterPassword}
+              onChangeText={setCurrentMasterPassword}
+              placeholder="Digite a senha mestra atual (se já tiver uma)"
+              secureTextEntry
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 12,
+                borderWidth: 1,
+                borderColor: '#e0e0e0',
+                marginBottom: 12
+              }}
+            />
+
+            <Text style={{ marginBottom: 4, color: '#333', fontWeight: '500' }}>Nova Senha Mestra</Text>
+            <TextInput
+              value={newMasterPassword}
+              onChangeText={setNewMasterPassword}
+              placeholder="Digite a nova senha mestra"
+              secureTextEntry
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 12,
+                borderWidth: 1,
+                borderColor: '#e0e0e0',
+                marginBottom: 12
+              }}
+            />
+
+            <Text style={{ marginBottom: 4, color: '#333', fontWeight: '500' }}>Confirmar Nova Senha Mestra</Text>
+            <TextInput
+              value={confirmMasterPassword}
+              onChangeText={setConfirmMasterPassword}
+              placeholder="Confirme a nova senha mestra"
+              secureTextEntry
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 12,
+                borderWidth: 1,
+                borderColor: '#e0e0e0',
+                marginBottom: 20
+              }}
+            />
 
             <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => {
-                setShowMasterPasswordModal(false);
-                Alert.alert(
-                  'Em Desenvolvimento',
-                  'A configuração da senha mestra será implementada em breve.',
-                  [{ text: 'OK' }]
-                );
-              }}
+              style={[styles.actionButton, savingMasterPassword && { opacity: 0.7 }]}
+              onPress={handleSaveMasterPassword}
+              disabled={savingMasterPassword}
             >
-              <Text style={styles.actionButtonText}>Configurar Senha Mestra</Text>
+              <Text style={styles.actionButtonText}>
+                {savingMasterPassword ? 'Salvando...' : 'Salvar Senha Mestra'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
