@@ -15,6 +15,7 @@ const directGoogleDriveRoutes = require('./directGoogleDrive');
 const categoryRoutes = require('./categories');
 const exportRoutes = require('./export');
 const securityRoutes = require('./security');
+const securityEventsRoutes = require('./securityEvents');
 
 // Configurar rotas
 router.use('/auth', authRoutes);
@@ -30,6 +31,7 @@ router.use('/direct-google-drive', directGoogleDriveRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/export', exportRoutes);
 router.use('/security', securityRoutes);
+router.use('/security/events', securityEventsRoutes);
 
 /**
  * @swagger
@@ -117,6 +119,7 @@ router.get('/', (req, res) => {
       simpleBackup: '/api/simple-backup',
       googleDrive: '/api/google-drive',
       directGoogleDrive: '/api/direct-google-drive',
+      securityEvents: '/api/security/events',
       health: '/api/health'
     }
   });

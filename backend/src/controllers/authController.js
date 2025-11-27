@@ -1,5 +1,6 @@
 const { User } = require('../models');
 const { generateTokens } = require('../middleware/auth');
+const { logSecurityEvent } = require('../services/securityEventLogger');
 
 class AuthController {
   /**
@@ -224,6 +225,14 @@ class AuthController {
 
       // Verificar se conta está bloqueada
       if (user.isLocked()) {
+        await logSecurityEvent({
+          userId: user.id,
+          type: 'login_blocked_account_locked',
+          severity: 'high',
+          title: 'Conta temporariamente bloqueada',
+          message: 'Tentativa de login enquanto a conta está bloqueada por muitas tentativas inválidas.',
+          req,
+        });
         return res.status(423).json({
           success: false,
           message: 'Conta temporariamente bloqueada devido a muitas tentativas de login',
@@ -233,6 +242,14 @@ class AuthController {
 
       // Verificar se conta está ativa
       if (!user.isActive) {
+        await logSecurityEvent({
+          userId: user.id,
+          type: 'login_blocked_account_disabled',
+          severity: 'medium',
+          title: 'Conta desativada',
+          message: 'Tentativa de login em uma conta desativada.',
+          req,
+        });
         return res.status(401).json({
           success: false,
           message: 'Conta desativada',
@@ -245,6 +262,14 @@ class AuthController {
       if (!isValidPassword) {
         // Incrementar tentativas de login
         await user.incLoginAttempts();
+        await logSecurityEvent({
+          userId: user.id,
+          type: 'login_failed_invalid_password',
+          severity: 'medium',
+          title: 'Tentativa de login com senha incorreta',
+          message: 'Uma tentativa de login falhou devido a senha incorreta.',
+          req,
+        });
         
         return res.status(401).json({
           success: false,
@@ -295,6 +320,14 @@ class AuthController {
         }
 
         // Retornar resposta indicando que 2FA é necessário
+        await logSecurityEvent({
+          userId: user.id,
+          type: 'login_requires_2fa',
+          severity: 'low',
+          title: 'Login requer autenticação em duas etapas',
+          message: 'Um código 2FA foi enviado para o email do usuário para completar o login.',
+          req,
+        });
         return res.status(202).json({
           success: true,
           message: 'Código de verificação enviado para seu email',
@@ -326,6 +359,15 @@ class AuthController {
             refreshToken
           }
         }
+      });
+
+      await logSecurityEvent({
+        userId: user.id,
+        type: 'login_success',
+        severity: 'low',
+        title: 'Login realizado com sucesso',
+        message: 'O usuário realizou login com sucesso com email e senha.',
+        req,
       });
     } catch (error) {
       console.error('Erro no login:', error);

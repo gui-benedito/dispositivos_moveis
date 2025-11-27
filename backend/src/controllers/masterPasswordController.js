@@ -1,5 +1,6 @@
 const { User } = require('../models');
 const cryptoService = require('../services/cryptoService');
+const { logSecurityEvent } = require('../services/securityEventLogger');
 
 class MasterPasswordController {
   static async setMasterPassword(req, res) {
@@ -48,6 +49,14 @@ class MasterPasswordController {
           user.masterKeySalt
         );
         if (!isValid) {
+          await logSecurityEvent({
+            userId,
+            type: 'master_password_change_invalid_current',
+            severity: 'medium',
+            title: 'Tentativa de alterar senha mestra com senha atual incorreta',
+            message: 'O usuário informou uma senha mestra atual incorreta ao tentar alterar a senha mestra.',
+            req,
+          });
           return res.status(401).json({
             success: false,
             message: 'Senha mestra atual incorreta',
@@ -63,11 +72,22 @@ class MasterPasswordController {
       user.masterKeyHash = keyHash;
       await user.save();
 
+      const successMessage = hasExistingMaster
+        ? 'Senha mestra atualizada com sucesso'
+        : 'Senha mestra definida com sucesso';
+
+      await logSecurityEvent({
+        userId,
+        type: hasExistingMaster ? 'master_password_changed' : 'master_password_set',
+        severity: 'high',
+        title: hasExistingMaster ? 'Senha mestra alterada' : 'Senha mestra definida',
+        message: successMessage,
+        req,
+      });
+
       return res.json({
         success: true,
-        message: hasExistingMaster
-          ? 'Senha mestra atualizada com sucesso'
-          : 'Senha mestra definida com sucesso'
+        message: successMessage
       });
     } catch (error) {
       console.error('Erro ao definir senha mestra:', error);
@@ -108,12 +128,29 @@ class MasterPasswordController {
       );
 
       if (!isValid) {
+        await logSecurityEvent({
+          userId,
+          type: 'master_password_invalid',
+          severity: 'medium',
+          title: 'Senha mestra incorreta',
+          message: 'Tentativa de uso de senha mestra incorreta para desbloquear conteúdo seguro.',
+          req,
+        });
         return res.status(401).json({
           success: false,
           message: 'Senha mestra incorreta',
           code: 'INVALID_MASTER_PASSWORD'
         });
       }
+
+      await logSecurityEvent({
+        userId,
+        type: 'master_password_verified',
+        severity: 'low',
+        title: 'Senha mestra verificada',
+        message: 'Senha mestra verificada com sucesso para acesso a conteúdo seguro.',
+        req,
+      });
 
       return res.json({
         success: true,

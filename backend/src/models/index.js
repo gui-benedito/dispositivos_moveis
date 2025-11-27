@@ -9,6 +9,7 @@ const Note = require('./Note');
 const Backup = require('./Backup');
 const CredentialVersion = require('./CredentialVersion');
 const Category = require('./Category');
+const SecurityEvent = require('./SecurityEvent');
 
 // Associações entre modelos
 User.hasMany(BiometricSession, { foreignKey: 'userId', as: 'biometricSessions' });
@@ -41,6 +42,10 @@ Note.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(Backup, { foreignKey: 'userId', as: 'backups' });
 Backup.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Eventos de segurança
+User.hasMany(SecurityEvent, { foreignKey: 'userId', as: 'securityEvents' });
+SecurityEvent.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Sincronizar modelos com o banco de dados
 const syncDatabase = async () => {
@@ -80,5 +85,6 @@ module.exports = {
   Note,
   Backup,
   Category,
+  SecurityEvent,
   syncDatabase
 };

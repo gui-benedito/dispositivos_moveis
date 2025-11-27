@@ -13,6 +13,8 @@ import MasterPasswordScreen from './src/screens/MasterPasswordScreen';
 import CloudBackupScreen from './src/screens/CloudBackupScreen';
 import BackupManagementScreen from './src/screens/BackupManagementScreen';
 import SimpleBackupScreen from './src/screens/SimpleBackupScreen';
+import SecurityAlertsScreen from './src/screens/SecurityAlertsScreen';
+import { securityEventsService } from './src/services/securityEventsService';
 import { AppLockProvider } from './src/components/AppLockProvider';
 import { SettingsProvider } from './src/contexts/SettingsContext';
 import { ThemeProvider } from './src/contexts/ThemeContext';
@@ -22,13 +24,50 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings' | 'credentials' | 'notes' | 'noteEditor' | 'masterPassword' | '2fa' | 'cloudBackup' | 'backupManagement' | 'simpleBackup'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings' | 'credentials' | 'notes' | 'noteEditor' | 'masterPassword' | '2fa' | 'cloudBackup' | 'backupManagement' | 'simpleBackup' | 'securityAlerts'>('home');
   const [editingNote, setEditingNote] = useState<any>(null);
   const [pendingNoteAction, setPendingNoteAction] = useState<(() => void) | null>(null);
+  const [unreadSecurityEvents, setUnreadSecurityEvents] = useState<number>(0);
 
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  // Polling simples de eventos de segurança não lidos
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
+    const fetchUnread = async () => {
+      try {
+        const response = await securityEventsService.listEvents({
+          page: 1,
+          pageSize: 1,
+          unreadOnly: true,
+        });
+        // Se backend devolver paginação.total, usamos, senão usamos length
+        const total = (response as any).pagination?.total ?? response.data.length;
+        setUnreadSecurityEvents(total);
+      } catch (error) {
+        // Não quebrar app em caso de erro de rede
+        // console.error('Erro ao buscar eventos de segurança não lidos:', error);
+      }
+    };
+
+    if (isAuthenticated && user) {
+      // Buscar imediatamente ao autenticar
+      fetchUnread();
+      // Polling a cada 30s
+      intervalId = setInterval(fetchUnread, 30000);
+    } else {
+      setUnreadSecurityEvents(0);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isAuthenticated, user]);
 
   const checkAuthStatus = async () => {
     try {
@@ -122,6 +161,10 @@ export default function App() {
     setCurrentScreen('simpleBackup');
   };
 
+  const handleNavigateToSecurityAlerts = () => {
+    setCurrentScreen('securityAlerts');
+  };
+
   const handle2FACancel = () => {
     setCurrentScreen('settings');
   };
@@ -163,6 +206,8 @@ export default function App() {
                 onNavigateToCredentials={handleNavigateToCredentials}
                 onNavigateToNotes={handleNavigateToNotes}
                 onNavigateToSimpleBackup={handleNavigateToSimpleBackup}
+                onNavigateToSecurityAlerts={handleNavigateToSecurityAlerts}
+                unreadSecurityEvents={unreadSecurityEvents}
               />
             ) : currentScreen === 'settings' ? (
               <SettingsScreen 
@@ -231,6 +276,10 @@ export default function App() {
             ) : currentScreen === 'simpleBackup' ? (
               <SimpleBackupScreen
                 navigation={{ goBack: handleNavigateToHome }}
+              />
+            ) : currentScreen === 'securityAlerts' ? (
+              <SecurityAlertsScreen
+                onNavigateBack={handleNavigateToHome}
               />
             ) : (
               <CredentialsScreen 

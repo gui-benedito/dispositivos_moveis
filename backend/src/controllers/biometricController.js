@@ -1,5 +1,6 @@
 const { User, BiometricSession } = require('../models');
 const { generateTokens } = require('../middleware/auth');
+const { logSecurityEvent } = require('../services/securityEventLogger');
 const crypto = require('crypto');
 
 // Debug: verificar se BiometricSession está disponível
@@ -277,6 +278,15 @@ class BiometricController {
       }
 
       if (!session) {
+        await logSecurityEvent({
+          userId: null,
+          type: 'biometric_auth_invalid_session',
+          severity: 'medium',
+          title: 'Sessão biométrica inválida',
+          message: 'Tentativa de autenticação biométrica com sessão inexistente.',
+          req,
+          metadata: { sessionId },
+        });
         return res.status(401).json({
           success: false,
           message: 'Sessão biométrica inválida',
@@ -288,6 +298,15 @@ class BiometricController {
 
       // Verificar se a sessão é válida
       if (!session.isValid()) {
+        await logSecurityEvent({
+          userId: user.id,
+          type: 'biometric_auth_session_expired',
+          severity: 'medium',
+          title: 'Sessão biométrica expirada',
+          message: 'Tentativa de autenticação biométrica com sessão expirada.',
+          req,
+          metadata: { sessionId },
+        });
         return res.status(401).json({
           success: false,
           message: 'Sessão biométrica expirada',
@@ -297,6 +316,14 @@ class BiometricController {
 
       // Verificar se biometria está ativada
       if (!user.biometricEnabled) {
+        await logSecurityEvent({
+          userId: user.id,
+          type: 'biometric_auth_disabled',
+          severity: 'low',
+          title: 'Biometria desativada durante autenticação',
+          message: 'Tentativa de autenticação biométrica quando a biometria está desativada.',
+          req,
+        });
         return res.status(401).json({
           success: false,
           message: 'Autenticação biométrica não está ativada',
@@ -306,6 +333,15 @@ class BiometricController {
 
       // Verificar tipo de biometria
       if (user.biometricType !== biometricType && user.biometricType !== 'both') {
+        await logSecurityEvent({
+          userId: user.id,
+          type: 'biometric_auth_type_mismatch',
+          severity: 'medium',
+          title: 'Tipo de biometria não corresponde ao configurado',
+          message: 'Tentativa de autenticação biométrica com tipo diferente do configurado.',
+          req,
+          metadata: { biometricTypeConfigured: user.biometricType, biometricTypeUsed: biometricType },
+        });
         return res.status(401).json({
           success: false,
           message: 'Tipo de biometria não corresponde ao configurado',
@@ -393,6 +429,16 @@ class BiometricController {
           },
           sessionId: session.sessionId // Incluir sessionId na resposta
         }
+      });
+
+      await logSecurityEvent({
+        userId: user.id,
+        type: 'biometric_auth_success',
+        severity: 'low',
+        title: 'Autenticação biométrica bem-sucedida',
+        message: 'O usuário autenticou com sucesso usando biometria.',
+        req,
+        metadata: { biometricType },
       });
     } catch (error) {
       console.error('Erro na autenticação biométrica:', error);

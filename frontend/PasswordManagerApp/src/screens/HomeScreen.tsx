@@ -15,6 +15,8 @@ interface HomeScreenProps {
   onNavigateToCredentials: () => void;
   onNavigateToNotes: () => void;
   onNavigateToSimpleBackup: () => void;
+  onNavigateToSecurityAlerts: () => void;
+  unreadSecurityEvents: number;
   user: {
     firstName: string;
     lastName: string;
@@ -22,7 +24,7 @@ interface HomeScreenProps {
   };
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings, onNavigateToCredentials, onNavigateToNotes, onNavigateToSimpleBackup, user }) => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings, onNavigateToCredentials, onNavigateToNotes, onNavigateToSimpleBackup, onNavigateToSecurityAlerts, unreadSecurityEvents, user }) => {
   const { colors } = useTheme();
   const handleLogout = () => {
     Alert.alert(
@@ -71,6 +73,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onLogout, onNavigateToSettings,
 
         <TouchableOpacity style={[styles.simpleBackupButton, { backgroundColor: colors.primary }]} onPress={onNavigateToSimpleBackup}>
           <Text style={styles.simpleBackupButtonText}>💾 Backup em Nuvem</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.securityAlertsButton, { backgroundColor: colors.primary }]} onPress={onNavigateToSecurityAlerts}>
+          <View style={styles.securityAlertsContent}>
+            <Text style={styles.securityAlertsButtonText}>🛡️ Notificações de Segurança</Text>
+            {unreadSecurityEvents > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {unreadSecurityEvents > 99 ? '99+' : unreadSecurityEvents}
+                </Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.settingsButton, { backgroundColor: colors.primary }]} onPress={onNavigateToSettings}>
@@ -207,6 +222,37 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  securityAlertsButton: {
+    backgroundColor: '#9b59b6',
+    marginTop: 15,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  securityAlertsButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  securityAlertsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  badge: {
+    marginLeft: 8,
+    minWidth: 22,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 11,
+    backgroundColor: '#D32F2F',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   settingsButton: {
     backgroundColor: '#3498db',

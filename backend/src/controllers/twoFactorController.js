@@ -2,6 +2,7 @@ const { User, TwoFactorAuth, VerificationCode } = require('../models');
 const TwoFactorService = require('../services/twoFactorService');
 const EmailService = require('../services/emailService');
 const { generateTokens } = require('../middleware/auth');
+const { logSecurityEvent } = require('../services/securityEventLogger');
 const crypto = require('crypto');
 
 class TwoFactorController {
@@ -142,6 +143,16 @@ class TwoFactorController {
         data: responseData
       });
 
+      await logSecurityEvent({
+        userId,
+        type: '2fa_setup_email_requested',
+        severity: 'low',
+        title: 'Configuração de 2FA por email iniciada',
+        message: 'Um código de verificação foi enviado para o email do usuário para configurar o 2FA.',
+        req,
+        metadata: { method },
+      });
+
     } catch (error) {
       console.error('❌ Erro ao configurar 2FA:', error);
       console.error('❌ Stack trace:', error.stack);
@@ -217,6 +228,15 @@ class TwoFactorController {
 
       if (!verificationRecord) {
         console.log('❌ Código inválido ou expirado');
+        await logSecurityEvent({
+          userId: null,
+          type: 'login_2fa_invalid_code',
+          severity: 'medium',
+          title: 'Código 2FA inválido ou expirado (login)',
+          message: 'Tentativa de login 2FA falhou devido a código inválido ou expirado.',
+          req,
+          metadata: { method },
+        });
         return res.status(401).json({
           success: false,
           message: 'Código inválido ou expirado',
@@ -249,6 +269,16 @@ class TwoFactorController {
           }
         }
       });
+
+      await logSecurityEvent({
+        userId: user.id,
+        type: 'login_2fa_success',
+        severity: 'low',
+        title: 'Login 2FA realizado com sucesso',
+        message: 'O usuário concluiu o login utilizando código 2FA enviado por email.',
+        req,
+        metadata: { method },
+      });
     } catch (error) {
       console.error('❌ Erro ao verificar 2FA para login:', error);
       res.status(500).json({
@@ -279,6 +309,15 @@ class TwoFactorController {
 
       if (!twoFactorConfig) {
         console.log('❌ Configuração 2FA não encontrada');
+        await logSecurityEvent({
+          userId,
+          type: '2fa_config_not_found',
+          severity: 'medium',
+          title: 'Configuração 2FA não encontrada',
+          message: 'Tentativa de usar 2FA para um método sem configuração ativa.',
+          req,
+          metadata: { method, isActivation },
+        });
         return res.status(404).json({
           success: false,
           message: 'Configuração 2FA não encontrada',
@@ -333,7 +372,16 @@ class TwoFactorController {
       if (!isValid) {
         // Incrementar tentativas falhadas
         await twoFactorConfig.incrementFailedAttempts();
-        
+        await logSecurityEvent({
+          userId,
+          type: isActivation ? '2fa_activation_invalid_code' : '2fa_login_invalid_code',
+          severity: 'medium',
+          title: isActivation ? 'Código 2FA inválido na ativação' : 'Código 2FA inválido no login',
+          message: 'Um código 2FA inválido foi informado.',
+          req,
+          metadata: { method, isActivation },
+        });
+
         return res.status(401).json({
           success: false,
           message: 'Código 2FA inválido',
@@ -366,6 +414,16 @@ class TwoFactorController {
           success: true,
           message: '2FA ativado com sucesso'
         });
+
+        await logSecurityEvent({
+          userId,
+          type: '2fa_enabled_email',
+          severity: 'low',
+          title: '2FA por email ativado',
+          message: 'O usuário ativou autenticação em duas etapas por email.',
+          req,
+          metadata: { method },
+        });
       } else {
         console.log('🔧 Autenticação 2FA...');
         // Autenticação 2FA
@@ -381,6 +439,16 @@ class TwoFactorController {
           data: {
             tokens: { accessToken, refreshToken }
           }
+        });
+
+        await logSecurityEvent({
+          userId,
+          type: '2fa_login_success',
+          severity: 'low',
+          title: 'Autenticação 2FA realizada com sucesso',
+          message: 'O usuário autenticou com sucesso usando 2FA.',
+          req,
+          metadata: { method },
         });
       }
 
@@ -447,6 +515,15 @@ class TwoFactorController {
 
       if (!twoFactorConfig) {
         console.log('❌ 2FA não está ativado');
+        await logSecurityEvent({
+          userId,
+          type: '2fa_disable_not_enabled',
+          severity: 'low',
+          title: 'Tentativa de desativar 2FA não ativado',
+          message: 'O usuário tentou desativar 2FA que não estava ativado.',
+          req,
+          metadata: { method },
+        });
         return res.status(404).json({
           success: false,
           message: '2FA não está ativado',
@@ -467,6 +544,16 @@ class TwoFactorController {
       res.json({
         success: true,
         message: '2FA desativado com sucesso'
+      });
+
+      await logSecurityEvent({
+        userId,
+        type: '2fa_disabled_email',
+        severity: 'low',
+        title: '2FA por email desativado',
+        message: 'O usuário desativou o 2FA por email.',
+        req,
+        metadata: { method },
       });
 
     } catch (error) {
