@@ -240,10 +240,20 @@ const NotesListScreen: React.FC<NotesListScreenProps> = ({ navigation }) => {
       </View>
 
       {/* Barra de busca */}
-      <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }] }>
+      <View style={[styles.searchContainer, { backgroundColor: 'transparent', borderColor: 'transparent' }] }>
         <Ionicons name="search" size={20} color={colors.mutedText} style={styles.searchIcon} />
         <TextInput
-          style={[styles.searchInput, { color: colors.text }]}
+          style={[
+            styles.searchInput,
+            {
+              backgroundColor: '#FFFFFF',
+              borderColor: colors.border,
+              borderWidth: 1,
+              borderRadius: 8,
+              paddingHorizontal: 12,
+              color: colors.text,
+            },
+          ]}
           placeholder="Buscar notas..."
           value={searchTerm}
           onChangeText={setSearchTerm}

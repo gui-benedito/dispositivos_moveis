@@ -234,94 +234,43 @@ const NoteEditorScreen: React.FC<NoteEditorScreenProps> = ({ navigation, route }
             {saving ? (
               <ActivityIndicator size="small" color={colors.text} />
             ) : (
-
-/**
- * Renderizar cores
- */
-const renderColors = () => (
-  <View style={styles.colorsContainer}>
-    <Text style={styles.sectionTitle}>Cor</Text>
-    <View style={styles.colorsList}>
-      {availableColors.map((colorOption) => (
-        <TouchableOpacity
-          key={colorOption}
-          style={[
-            styles.colorOption,
-            { backgroundColor: colorOption },
-            color === colorOption && styles.colorOptionSelected
-          ]}
-          onPress={() => setColor(colorOption)}
-        >
-          {color === colorOption && (
-            <Ionicons name="checkmark" size={16} color="white" />
-          )}
-        </TouchableOpacity>
-      ))}
-    </View>
-  </View>
-);
-
-return (
-  <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-    <KeyboardAvoidingView
-      style={styles.keyboardView}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          {isEditing ? 'Editar Nota' : 'Nova Nota'}
-        </Text>
-        
-        <TouchableOpacity
-          onPress={handleSave}
-          style={[styles.saveButton, saving && styles.saveButtonDisabled, { backgroundColor: saving ? colors.mutedText : colors.primary }]}
-          disabled={saving || !title.trim() || !content.trim()}
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color={colors.text} />
-          ) : (
-            <Ionicons name="checkmark" size={24} color={colors.text} />
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Título */}
-        <View style={styles.inputContainer}>
-          <Text style={[styles.label, { color: colors.text }]}>Título *</Text>
-          <TextInput
-            style={styles.titleInput}
-            placeholder="Digite o título da nota..."
-            value={title}
-            onChangeText={setTitle}
-            maxLength={255}
-          />
+              <Ionicons name="checkmark" size={24} color={colors.text} />
+            )}
+          </TouchableOpacity>
         </View>
 
-        {/* Conteúdo */}
-        <View style={styles.inputContainer}>
-          <Text style={[styles.label, { color: colors.text }]}>Conteúdo *</Text>
-          <TextInput
-            style={styles.contentInput}
-            placeholder="Digite o conteúdo da nota..."
-            value={content}
-            onChangeText={setContent}
-            multiline
-            textAlignVertical="top"
-            maxLength={10000}
-          />
-        </View>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Título */}
+          <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: colors.text }]}>Título *</Text>
+            <TextInput
+              style={styles.titleInput}
+              placeholder="Digite o título da nota..."
+              value={title}
+              onChangeText={setTitle}
+              maxLength={255}
+            />
+          </View>
 
-        {/* Tags */}
-        {renderTags()}
+          {/* Conteúdo */}
+          <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: colors.text }]}>Conteúdo *</Text>
+            <TextInput
+              style={styles.contentInput}
+              placeholder="Digite o conteúdo da nota..."
+              value={content}
+              onChangeText={setContent}
+              multiline
+              textAlignVertical="top"
+              maxLength={10000}
+            />
+          </View>
+
+          {/* Tags */}
+          {renderTags()}
+
+          {/* Cores */}
+          {renderColors()}
 
           {/* Informações de segurança (temporariamente desativado) */}
           {/**

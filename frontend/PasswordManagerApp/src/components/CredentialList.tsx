@@ -277,7 +277,7 @@ const CredentialList: React.FC<CredentialListProps> = ({
     <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }] }>
       <View style={styles.searchContainer}>
         <TextInput
-          style={[styles.searchInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+          style={[styles.searchInput, { backgroundColor: '#FFFFFF', borderColor: colors.border, color: colors.text }]}
           placeholder="Buscar por título, login ou categoria"
           value={searchText}
           onChangeText={setSearchText}
