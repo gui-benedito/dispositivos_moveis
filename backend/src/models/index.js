@@ -52,18 +52,21 @@ const syncDatabase = async () => {
   try {
     await sequelize.authenticate();
     console.log('✅ Conexão com banco de dados estabelecida com sucesso.');
-    
-    // Configuração de sincronização baseada no ambiente
+
+    // Por padrão, não fazemos alter/drop automático de tabelas.
+    // Isso evita resets e erros de migração toda vez que o servidor sobe.
     const syncOptions = {
-      force: false, // Nunca forçar (não apaga dados)
-      alter: process.env.NODE_ENV === 'development' ? true : false // Alterar tabelas em desenvolvimento
+      force: false,
+      // Se, e somente se, você definir DB_SYNC_ALTER=true no ambiente,
+      // o Sequelize tentará ajustar o schema existente.
+      alter: process.env.DB_SYNC_ALTER === 'true'
     };
-    
+
     console.log('🔄 Sincronizando modelos com banco de dados...');
     console.log('📋 Opções de sincronização:', syncOptions);
-    
+
     await sequelize.sync(syncOptions);
-    
+
     console.log('✅ Modelos sincronizados com banco de dados.');
     console.log('📊 Tabelas disponíveis:', Object.keys(sequelize.models));
   } catch (error) {
