@@ -30,6 +30,7 @@ interface CredentialListProps {
   onFiltersChange?: (filters: CredentialFilters) => void;
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
+  onCheckSecurity?: (credential: CredentialPublic) => void;
 }
 
 const CredentialList: React.FC<CredentialListProps> = ({
@@ -43,7 +44,8 @@ const CredentialList: React.FC<CredentialListProps> = ({
   filters = {},
   onFiltersChange,
   onLoadMore,
-  isLoadingMore
+  isLoadingMore,
+  onCheckSecurity,
 }) => {
   const { colors } = useTheme();
   const [searchText, setSearchText] = useState(filters.search || '');
@@ -200,6 +202,14 @@ const CredentialList: React.FC<CredentialListProps> = ({
           {item.isFavorite && <Text style={styles.favoriteIcon}>⭐</Text>}
         </View>
         <View style={styles.actionsRight}>
+          {onCheckSecurity && (
+            <TouchableOpacity
+              onPress={() => onCheckSecurity(item)}
+              style={styles.actionButton}
+            >
+              <Ionicons name="shield-checkmark-outline" size={20} color="#27ae60" />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={() => onEditCredential(item)}
             style={styles.actionButton}
@@ -255,6 +265,16 @@ const CredentialList: React.FC<CredentialListProps> = ({
           {new Date(item.createdAt).toLocaleDateString('pt-BR')}
         </Text>
       </View>
+
+      {onCheckSecurity && (
+        <TouchableOpacity
+          style={styles.securityCheckButton}
+          onPress={() => onCheckSecurity(item)}
+        >
+          <Ionicons name="shield-checkmark-outline" size={16} color="#27ae60" style={{ marginRight: 6 }} />
+          <Text style={styles.securityCheckText}>Verificar senha (HIBP)</Text>
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 
@@ -551,6 +571,22 @@ const styles = StyleSheet.create({
   credentialDate: {
     fontSize: 12,
     color: '#999',
+  },
+  securityCheckButton: {
+    marginTop: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#27ae60',
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+  },
+  securityCheckText: {
+    fontSize: 12,
+    color: '#27ae60',
+    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,

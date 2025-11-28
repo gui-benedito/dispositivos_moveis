@@ -26,6 +26,7 @@ interface SettingsScreenProps {
   onLogout: () => void;
   onNavigateToHome: () => void;
   onNavigateTo2FASetup?: () => void;
+  onNavigateToRiskPasswords?: () => void;
   user: {
     firstName: string;
     lastName: string;
@@ -33,7 +34,7 @@ interface SettingsScreenProps {
   };
 }
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToHome, onNavigateTo2FASetup, user }) => {
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToHome, onNavigateTo2FASetup, onNavigateToRiskPasswords, user }) => {
   const { settings, updateSettings, loading } = useAuthenticatedSettings(true);
   const { colors } = useTheme();
   const { status: twoFactorStatus, loadStatus, disable2FA } = useTwoFactor();
@@ -447,6 +448,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
               </Text>
             </View>
           </View>
+
+          <TouchableOpacity
+            style={[styles.settingItem, { backgroundColor: colors.card, marginTop: 16 }]}
+            onPress={() => {
+              if (onNavigateToRiskPasswords) {
+                onNavigateToRiskPasswords();
+              } else {
+                Alert.alert('Info', 'Tela de senhas em risco não está disponível.');
+              }
+            }}
+          >
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Senhas em Risco (HIBP)</Text>
+              <Text style={[styles.settingDescription, { color: colors.mutedText }]}>Verificar se alguma senha do seu cofre apareceu em vazamentos públicos.</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
         </View>
 
         {/* Tema (Claro/Escuro) */}

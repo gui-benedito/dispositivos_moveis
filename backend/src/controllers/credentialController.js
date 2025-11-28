@@ -1,6 +1,7 @@
 const { Credential, User, CredentialVersion } = require('../models');
 const { Op } = require('sequelize');
 const cryptoService = require('../services/cryptoService');
+const { checkPasswordPwned } = require('../services/hibpService');
 const { validationResult } = require('express-validator');
 
 class CredentialController {
@@ -983,10 +984,18 @@ class CredentialController {
 
       const strength = cryptoService.analyzePasswordStrength(password);
 
+      let hibp = { found: false, count: 0 };
+      try {
+        hibp = await checkPasswordPwned(password);
+      } catch (hibpError) {
+        console.error('Erro ao consultar HIBP em analyzePassword:', hibpError.message || hibpError);
+      }
+
       res.json({
         success: true,
         data: {
-          strength
+          strength,
+          hibp,
         }
       });
     } catch (error) {

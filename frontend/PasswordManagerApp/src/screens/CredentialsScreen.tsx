@@ -60,6 +60,7 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
   const [masterPassword, setMasterPassword] = useState('');
   const [showMasterPasswordInput, setShowMasterPasswordInput] = useState(false);
   const [isEditFlow, setIsEditFlow] = useState(false);
+  const [isSecurityCheckFlow, setIsSecurityCheckFlow] = useState(false);
   const [editInitialData, setEditInitialData] = useState<Partial<CreateCredentialRequest> | undefined>(undefined);
   const [showVersionsModal, setShowVersionsModal] = useState(false);
   const [versions, setVersions] = useState<CredentialVersionItem[]>([]);
@@ -94,6 +95,14 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
   const handleEditCredential = (credential: CredentialPublic) => {
     setEditingCredential(credential);
     setIsEditFlow(true);
+    setShowMasterPasswordInput(true);
+  };
+
+  // Verificar segurança (HIBP) direto do card
+  const handleCheckCredentialSecurity = (credential: CredentialPublic) => {
+    setViewingCredential(credential);
+    setIsEditFlow(false);
+    setIsSecurityCheckFlow(true);
     setShowMasterPasswordInput(true);
   };
 
@@ -135,6 +144,41 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
         setIsEditFlow(false);
         return;
       }
+    }
+
+    // Fluxo de verificação de segurança (análise/HIBP) direto da lista
+    if (isSecurityCheckFlow && viewingCredential) {
+      try {
+        const credential = await getCredential(viewingCredential.id, masterPassword);
+
+        setShowMasterPasswordInput(false);
+        setMasterPassword('');
+        setIsSecurityCheckFlow(false);
+
+        const response = await CredentialService.analyzePassword(credential.password);
+        if (response.success) {
+          const strength = response.data.strength;
+          const hibp = (response.data as any).hibp;
+
+          const hibpMsg = hibp && hibp.found
+            ? `⚠️ Esta senha apareceu em vazamentos públicos ${hibp.count} vez(es). Recomenda-se alterá-la.`
+            : '✅ Esta senha não foi encontrada em vazamentos públicos conhecidos.';
+
+          Alert.alert(
+            'Análise de Segurança',
+            `Força: ${strength.strength} (score ${strength.score})\n\n${hibpMsg}`
+          );
+        } else {
+          Alert.alert('Análise de Segurança', 'Não foi possível analisar a senha.');
+        }
+      } catch (error: any) {
+        Alert.alert('Erro', error.message || 'Erro ao analisar segurança da credencial');
+      } finally {
+        setMasterPassword('');
+        setIsSecurityCheckFlow(false);
+        setViewingCredential(null);
+      }
+      return;
     }
 
     if (!viewingCredential) return;
@@ -378,6 +422,7 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
         onFiltersChange={handleApplyFilters}
         onLoadMore={loadMore}
         isLoadingMore={isLoadingMore}
+        onCheckSecurity={handleCheckCredentialSecurity}
       />
 
       {/* Formulário de credencial */}

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const CredentialController = require('../controllers/credentialController');
+const HibpController = require('../controllers/hibpController');
 const { authenticateToken } = require('../middleware/auth');
 const { body, param, query } = require('express-validator');
 
@@ -286,6 +287,9 @@ router.post('/generate-password', generatePasswordValidation, CredentialControll
 
 // POST /api/credentials/analyze-password - Analisar força da senha
 router.post('/analyze-password', analyzePasswordValidation, CredentialController.analyzePassword);
+
+// POST /api/credentials/breached-passwords - Listar senhas em risco (HIBP)
+router.post('/breached-passwords', HibpController.getBreachedPasswords);
 
 // GET /api/credentials/:id/versions - Listar versões
 router.get('/:id/versions', listVersionsValidation, CredentialController.listVersions);

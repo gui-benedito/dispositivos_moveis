@@ -14,6 +14,7 @@ import CloudBackupScreen from './src/screens/CloudBackupScreen';
 import BackupManagementScreen from './src/screens/BackupManagementScreen';
 import SimpleBackupScreen from './src/screens/SimpleBackupScreen';
 import SecurityAlertsScreen from './src/screens/SecurityAlertsScreen';
+import RiskPasswordsScreen from './src/screens/RiskPasswordsScreen';
 import { securityEventsService } from './src/services/securityEventsService';
 import { AppLockProvider } from './src/components/AppLockProvider';
 import { SettingsProvider } from './src/contexts/SettingsContext';
@@ -24,7 +25,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings' | 'credentials' | 'notes' | 'noteEditor' | 'masterPassword' | '2fa' | 'cloudBackup' | 'backupManagement' | 'simpleBackup' | 'securityAlerts'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'settings' | 'credentials' | 'notes' | 'noteEditor' | 'masterPassword' | '2fa' | 'cloudBackup' | 'backupManagement' | 'simpleBackup' | 'securityAlerts' | 'riskPasswords'>('home');
   const [editingNote, setEditingNote] = useState<any>(null);
   const [pendingNoteAction, setPendingNoteAction] = useState<(() => void) | null>(null);
   const [unreadSecurityEvents, setUnreadSecurityEvents] = useState<number>(0);
@@ -165,6 +166,10 @@ export default function App() {
     setCurrentScreen('securityAlerts');
   };
 
+  const handleNavigateToRiskPasswords = () => {
+    setCurrentScreen('riskPasswords');
+  };
+
   const handle2FACancel = () => {
     setCurrentScreen('settings');
   };
@@ -215,6 +220,7 @@ export default function App() {
                 onLogout={handleLogout}
                 onNavigateToHome={handleNavigateToHome}
                 onNavigateTo2FASetup={handleNavigateTo2FA}
+                onNavigateToRiskPasswords={handleNavigateToRiskPasswords}
               />
             ) : currentScreen === 'credentials' ? (
               <CredentialsScreen 
@@ -280,6 +286,10 @@ export default function App() {
             ) : currentScreen === 'securityAlerts' ? (
               <SecurityAlertsScreen
                 onNavigateBack={handleNavigateToHome}
+              />
+            ) : currentScreen === 'riskPasswords' ? (
+              <RiskPasswordsScreen
+                onNavigateBack={handleNavigateToSettings}
               />
             ) : (
               <CredentialsScreen 
