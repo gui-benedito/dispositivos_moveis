@@ -13,6 +13,7 @@ import {
   Platform,
   Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCredentialForm, usePasswordGenerator } from '../hooks/useCredentials';
 import { Ionicons } from '@expo/vector-icons';
@@ -77,6 +78,9 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
   const [userCategories, setUserCategories] = useState<Category[]>([]);
   const [catLoading, setCatLoading] = useState(false);
   const [catError, setCatError] = useState<string | null>(null);
+
+  const CATEGORY_META_CACHE_KEY = 'credentialCategoryMetaCache';
+  const CREDENTIAL_CATEGORIES_CACHE_KEY = 'credentialCategoriesCache';
 
   const ICONS: string[] = [
     'briefcase-outline', 'mail-outline', 'logo-github', 'logo-google',
@@ -163,15 +167,62 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
     return PASSWORD_STRENGTH_ICONS[passwordStrength.strength] || '⚪';
   };
 
+  const getErrorCode = (err: any): string | undefined => {
+    return err?.code || err?.data?.code || err?.response?.data?.code;
+  };
+
   // Carregar categorias do usuário
   const loadUserCategories = async () => {
     try {
       setCatLoading(true);
       setCatError(null);
+
+      // Tenta carregar do backend
       const res = await CategoryService.list();
-      if (res.success) setUserCategories(res.data);
+      if (res.success) {
+        setUserCategories(res.data);
+        try {
+          await AsyncStorage.setItem(CATEGORY_META_CACHE_KEY, JSON.stringify(res.data));
+        } catch {}
+        return;
+      }
     } catch (e: any) {
       setCatError(e.message || 'Erro ao carregar categorias');
+
+      // Fallback 1: tentar ler cache local de metadados de categoria
+      try {
+        const raw = await AsyncStorage.getItem(CATEGORY_META_CACHE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as Category[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setUserCategories(parsed);
+            return;
+          }
+        }
+      } catch {}
+
+      // Fallback 2: montar categorias locais a partir das categorias conhecidas
+      const sourceNames: string[] = Array.from(
+        new Set(
+          [
+            ...(categories || []),
+            ...DEFAULT_CATEGORIES,
+          ].filter((name) => !!name && typeof name === 'string') as string[]
+        )
+      );
+
+      if (sourceNames.length > 0) {
+        const now = new Date().toISOString();
+        const localCats: Category[] = sourceNames.map((name, index) => ({
+          id: `local-${index}-${name}`,
+          name,
+          icon: null,
+          color: undefined,
+          createdAt: now,
+          updatedAt: now,
+        }));
+        setUserCategories(localCats);
+      }
     } finally {
       setCatLoading(false);
     }
@@ -187,6 +238,50 @@ const CredentialForm: React.FC<CredentialFormProps> = ({
       await loadUserCategories();
       onReloadCategories?.();
     } catch (e: any) {
+      const code = getErrorCode(e);
+
+      if (code === 'NETWORK_ERROR' || code === 'CONNECTION_REFUSED') {
+        const now = new Date().toISOString();
+        const localCat: Category = {
+          id: `local-${Date.now()}`,
+          name: payload.name,
+          icon: payload.icon ?? null,
+          color: payload.color,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        setUserCategories(prev => {
+          const next = [...prev, localCat];
+          AsyncStorage.setItem(CATEGORY_META_CACHE_KEY, JSON.stringify(next)).catch(() => {});
+          return next;
+        });
+
+        try {
+          const raw = await AsyncStorage.getItem(CREDENTIAL_CATEGORIES_CACHE_KEY);
+          let cachedNames: string[] = [];
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.categories)) {
+              cachedNames = parsed.categories as string[];
+            }
+          }
+          if (!cachedNames.includes(payload.name)) {
+            const updated = [...cachedNames, payload.name];
+            await AsyncStorage.setItem(
+              CREDENTIAL_CATEGORIES_CACHE_KEY,
+              JSON.stringify({ categories: updated })
+            );
+          }
+        } catch {}
+
+        Alert.alert(
+          'Categoria criada offline',
+          'Você está sem conexão. A categoria foi criada apenas localmente e continuará disponível para seleção.'
+        );
+        return;
+      }
+
       Alert.alert('Erro', e.message || 'Falha ao criar categoria');
     }
   };

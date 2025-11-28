@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import { LogBox } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import TwoFactorNavigator from './src/navigation/TwoFactorNavigator';
@@ -20,6 +21,40 @@ import { AppLockProvider } from './src/components/AppLockProvider';
 import { SettingsProvider } from './src/contexts/SettingsContext';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import { AuthTokens, User } from './src/types/auth';
+
+// Silenciar globalmente erros de rede offline para não poluir UI com overlays/toasts
+const originalConsoleError = console.error;
+console.error = (...args: any[]) => {
+  try {
+    const first = args[0];
+    const text = typeof first === 'string' ? first : JSON.stringify(first ?? '');
+    if (
+      text.includes('Erro de rede. Verifique sua conexão e se o backend está rodando.') ||
+      text.includes('NETWORK_ERROR') ||
+      text.includes('CONNECTION_REFUSED') ||
+      text.includes('Erro ao listar credenciais') ||
+      text.includes('Erro na API de credenciais') ||
+      text.includes('Erro ao carregar notas') ||
+      text.includes('Erro ao recarregar notas') ||
+      text.includes('Erro ao buscar notas')
+    ) {
+      // Ignora erros de rede/offline e erros conhecidos de serviços em modo offline
+      return;
+    }
+  } catch {
+    // se der erro ao inspecionar, delega para o original
+  }
+  // Outros erros reais continuam sendo logados normalmente
+  // eslint-disable-next-line no-console
+  originalConsoleError(...args);
+};
+
+// Ignorar avisos específicos no LogBox (YellowBox/RedBox)
+LogBox.ignoreLogs([
+  'Erro de rede. Verifique sua conexão e se o backend está rodando.',
+  'NETWORK_ERROR',
+  'CONNECTION_REFUSED',
+]);
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

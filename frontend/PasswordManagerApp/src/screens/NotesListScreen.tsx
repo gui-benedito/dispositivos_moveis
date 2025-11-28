@@ -27,6 +27,7 @@ const NotesListScreen: React.FC<NotesListScreenProps> = ({ navigation }) => {
     loading,
     error,
     stats,
+    isOffline,
     loadNotes,
     searchNotes,
     refreshNotes,
@@ -238,6 +239,14 @@ const NotesListScreen: React.FC<NotesListScreenProps> = ({ navigation }) => {
           <Ionicons name="add" size={24} color="white" />
         </TouchableOpacity>
       </View>
+
+      {isOffline && (
+        <View style={[styles.offlineBanner, { backgroundColor: '#f39c12' }] }>
+          <Text style={styles.offlineBannerText}>
+            Modo offline: exibindo notas do último sincronismo. Alterações serão sincronizadas ao reconectar.
+          </Text>
+        </View>
+      )}
 
       {/* Barra de busca */}
       <View style={[styles.searchContainer, { backgroundColor: 'transparent', borderColor: 'transparent' }] }>

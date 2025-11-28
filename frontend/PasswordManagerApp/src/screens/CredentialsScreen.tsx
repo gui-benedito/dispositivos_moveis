@@ -41,6 +41,7 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
     filters,
     pagination,
     isLoadingMore,
+    isOffline,
     loadCredentials,
     loadCategories,
     createCredential,
@@ -409,6 +410,14 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
         </TouchableOpacity>
       </View>
 
+      {isOffline && (
+        <View style={[styles.offlineBanner, { backgroundColor: '#f39c12' }]}> 
+          <Text style={styles.offlineBannerText}>
+            Modo offline: exibindo dados do último sincronismo.
+          </Text>
+        </View>
+      )}
+
       {/* Lista de credenciais */}
       <CredentialList
         credentials={credentials}
@@ -553,8 +562,8 @@ const CredentialsScreen: React.FC<CredentialsScreenProps> = ({ onNavigateBack })
         </View>
       </Modal>
 
-      {/* Indicador de erro */}
-      {error && (
+      {/* Indicador de erro (somente quando não está offline) */}
+      {error && !isOffline && (
         <View style={[styles.errorContainer, { backgroundColor: colors.danger }] }>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity
@@ -807,8 +816,22 @@ const styles = StyleSheet.create({
   },
   errorCloseButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  offlineBanner: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  offlineBannerText: {
+    color: '#fff',
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });
 
