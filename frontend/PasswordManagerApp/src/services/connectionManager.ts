@@ -1,23 +1,20 @@
 import axios from 'axios';
 
+const getBaseUrlFromEnv = (): string => {
+  if (!process.env.EXPO_PUBLIC_API_BASE_URL) {
+    throw new Error('EXPO_PUBLIC_API_BASE_URL não definida. Configure a URL base da API no ambiente.');
+  }
+  return process.env.EXPO_PUBLIC_API_BASE_URL;
+};
+
 class ConnectionManager {
   private workingUrl: string | null = null;
   private urlsToTest = this.getUrlsToTest();
 
   private getUrlsToTest(): string[] {
-    // Usar variável de ambiente se disponível
-    if (process.env.EXPO_PUBLIC_API_BASE_URL) {
-      return [process.env.EXPO_PUBLIC_API_BASE_URL];
-    }
-
-    // URLs padrão para diferentes ambientes
-    return [
-      'http://localhost:3000/api',
-      'http://127.0.0.1:3000/api',
-      'http://10.0.2.2:3000/api', // Android emulator
-      'http://192.168.1.100:3000/api', // IP local comum
-      'http://192.168.0.100:3000/api', // IP local comum
-    ];
+    // Preferir URL vinda de variável de ambiente, com fallback seguro
+    const base = getBaseUrlFromEnv();
+    return [base];
   }
 
   async findWorkingUrl(): Promise<string | null> {

@@ -83,6 +83,16 @@ export const useNotes = (): UseNotesReturn => {
     try {
       const raw = await AsyncStorage.getItem(NOTES_QUEUE_KEY);
       const list: PendingNoteOperation[] = raw ? JSON.parse(raw) : [];
+
+      // Evitar enfileirar múltiplas operações idênticas de criação
+      if (
+        op.type === 'create' &&
+        op.data &&
+        list.some(item => item.type === 'create' && JSON.stringify(item.data) === JSON.stringify(op.data))
+      ) {
+        return;
+      }
+
       list.push(op);
       await AsyncStorage.setItem(NOTES_QUEUE_KEY, JSON.stringify(list));
     } catch (e) {
@@ -145,6 +155,9 @@ export const useNotes = (): UseNotesReturn => {
       setLoading(true);
       setError(null);
       setIsOffline(false);
+
+      // Remover placeholders offline-note-* antes de recarregar
+      setNotes(prev => prev.filter(note => !String(note.id).startsWith('offline-note-')));
       
       await syncPendingNoteOperations();
 

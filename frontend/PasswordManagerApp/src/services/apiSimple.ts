@@ -2,20 +2,12 @@ import axios, { AxiosResponse } from 'axios';
 import { AuthResponse, LoginRequest, RegisterRequest, ApiError } from '../types/auth';
 import { connectionManager } from './connectionManager';
 
-// Configuração da API - detecta ambiente e usa URL apropriada
+// Configuração da API - exige EXPO_PUBLIC_API_BASE_URL (sem fallback hardcoded)
 const getApiBaseUrl = () => {
-  // Usar variável de ambiente se disponível
-  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
-    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (!process.env.EXPO_PUBLIC_API_BASE_URL) {
+    throw new Error('EXPO_PUBLIC_API_BASE_URL não definida. Configure a URL base da API no ambiente.');
   }
-  
-  // Para Expo web, usar localhost
-  if (typeof window !== 'undefined') {
-    return 'http://localhost:3000/api';
-  }
-  
-  // Para React Native, usar localhost por padrão
-  return 'http://localhost:3000/api';
+  return process.env.EXPO_PUBLIC_API_BASE_URL;
 };
 
 const API_BASE_URL = getApiBaseUrl();

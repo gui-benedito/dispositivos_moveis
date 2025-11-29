@@ -90,6 +90,16 @@ export const useCredentials = () => {
     try {
       const existing = await AsyncStorage.getItem('credentialOpsQueue');
       const list: PendingOperation[] = existing ? JSON.parse(existing) : [];
+
+      // Evitar enfileirar múltiplas operações idênticas de criação
+      if (
+        operation.type === 'create' &&
+        operation.data &&
+        list.some(op => op.type === 'create' && JSON.stringify(op.data) === JSON.stringify(operation.data))
+      ) {
+        return;
+      }
+
       list.push(operation);
       await AsyncStorage.setItem('credentialOpsQueue', JSON.stringify(list));
     } catch (queueError) {
@@ -143,6 +153,9 @@ export const useCredentials = () => {
       setLoading(true);
       setError(null);
       setIsOffline(false);
+
+      // Remover placeholders offline-* da lista atual antes de recarregar
+      setCredentials(prev => prev.filter(cred => !String(cred.id).startsWith('offline-')));
 
       const currentFilters = newFilters || filters;
 

@@ -150,6 +150,7 @@ class CredentialController {
    *         description: ID da credencial
    *     requestBody:
    *       required: true
+   *       content:
    *         application/json:
    *           schema:
    *             type: object

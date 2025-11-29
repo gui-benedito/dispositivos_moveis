@@ -28,6 +28,8 @@ router.use(authenticateToken);
  *         category:
  *           type: string
  *           description: Categoria da credencial
+ *         username:
+ *           type: string
  *           description: Nome de usuário
  *         password:
  *           type: string
@@ -40,20 +42,7 @@ router.use(authenticateToken);
  *           description: Se é favorita
  *         accessCount:
  *           type: integer
-{{ ... }}
- *         username:
- *           type: string
- *         password:
- *           type: string
- *           minLength: 1
- *         notes:
- *           type: string
- *         masterPassword:
- *           type: string
- *           minLength: 1
- *         isFavorite:
- *           type: boolean
- *           default: false
+ *           description: Número de acessos
  *     
  *     UpdateCredentialRequest:
  *       type: object
