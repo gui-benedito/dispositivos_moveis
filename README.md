@@ -38,8 +38,7 @@
 | 2 | RF12 | Como usuário, quero buscar rapidamente por nome/login/categoria. | Campo de busca com debounce; destaque de termos; resultados instantâneos. | Alta |
 | 3 | RF13 | Como usuário, quero ser alertado se minha senha foi vazada (HIBP). | Alertas em tempo real/ao abrir app; tela de “Senhas em risco”; ação “Trocar senha”. | Alta |
 | 3 | RF14 | Como usuário, quero exportar dados com reautenticação/2FA. | Fluxo com confirmação e reautenticação; salvar arquivo .vault (ou similar). | Média |
-| 3 | RF15 | Como usuário Android, quero preenchimento automático em apps/sites. | Serviço Android Autofill; seleção da credencial; permissão do usuário; UX de fallback. | Alta |
-| 3 | RF16 | Como usuário, quero usar o app offline e sincronizar ao reconectar. | Toda UI funciona sem rede; fila de operações; mensagem de estado offline/online. | Alta |
-| 3 | RF17 | Como usuário, quero ajustar bloqueio, senha mestre e biometria nas configurações. | Tela de configurações; toggles/sliders; validação em tempo real; persistência local. | Média |
-| 3 | RF18 | Como usuário, quero receber e ver notificações de segurança. | Receber push; bandeja de alertas; tela de histórico com filtros. | Alta |
-| 3 | RF19 | Como usuário, quero temas claro/escuro e ícones por categoria. | Alternar tema sem reiniciar; salvar preferências; contraste adequado (acessibilidade). | Média |
+| 3 | RF15 | Como usuário, quero usar o app offline e sincronizar ao reconectar. | Toda UI funciona sem rede; fila de operações; mensagem de estado offline/online. | Alta |
+| 3 | RF16 | Como usuário, quero ajustar bloqueio, senha mestre e biometria nas configurações. | Tela de configurações; toggles/sliders; validação em tempo real; persistência local. | Média |
+| 3 | RF17 | Como usuário, quero receber e ver notificações de segurança. | Receber push; bandeja de alertas; tela de histórico com filtros. | Alta |
+| 3 | RF18 | Como usuário, quero temas claro/escuro e ícones por categoria. | Alternar tema sem reiniciar; salvar preferências; contraste adequado (acessibilidade). | Média |

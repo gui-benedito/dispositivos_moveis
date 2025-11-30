@@ -289,13 +289,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToR
             <Text style={styles.linkText}>Não tem conta? Cadastre-se</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={handleTestConnection}
-            disabled={loading}
-          >
-            <Text style={styles.testButtonText}>🔧 Testar Conexão</Text>
-          </TouchableOpacity>
+          {/**
+           * Botão de teste de conexão (desativado/oculto por padrão)
+           *
+           * <TouchableOpacity
+           *   style={styles.testButton}
+           *   onPress={handleTestConnection}
+           *   disabled={loading}
+           * >
+           *   <Text style={styles.testButtonText}>🔧 Testar Conexão</Text>
+           * </TouchableOpacity>
+           */}
         </View>
       </View>
     </KeyboardAvoidingView>

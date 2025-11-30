@@ -25,25 +25,25 @@ interface ThemeProviderProps {
 }
 
 const lightColors: ThemeColors = {
-  // Light theme based on user palette
-  background: '#FFFFFF',      // main background
-  card: '#F5F5F5',            // secondary background (cards/inputs)
-  text: '#212121',            // primary text
-  mutedText: '#757575',       // secondary text
-  primary: '#6200EE',         // primary button / accent
-  danger: '#D32F2F',          // error
-  border: '#E0E0E0',          // light border / dividers
+  // Light theme based on user palette (pastel)
+  background: '#F7F9FB',      // main background (quase branco azulado)
+  card: '#FFFFFF',            // secondary background (cards)
+  text: '#4A5560',            // primary text
+  mutedText: '#6B7A88',       // secondary text / labels
+  primary: '#9CC5E8',         // primary button / accent
+  danger: '#D32F2F',          // error (mantida)
+  border: '#DCE4EC',          // light border / dividers
 };
 
 const darkColors: ThemeColors = {
-  // Dark theme based on user palette
-  background: '#121212',      // main background
-  card: '#1E1E1E',            // secondary background (cards/inputs)
-  text: '#E0E0E0',            // primary text
-  mutedText: '#B0B0B0',       // secondary text
-  primary: '#6200EE',         // primary button / accent (same as light)
-  danger: '#D32F2F',          // error
-  border: '#1E1E1E',          // subtle border in dark
+  // Dark theme based on user palette (suave)
+  background: '#111418',      // main background
+  card: '#181C21',            // secondary background (cards)
+  text: '#D8DEE3',            // primary text
+  mutedText: '#9AA4AD',       // secondary text / labels
+  primary: '#7BAED1',         // primary button / accent
+  danger: '#D32F2F',          // error (mantida)
+  border: '#2A3138',          // subtle border in dark
 };
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {

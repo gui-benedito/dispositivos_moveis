@@ -286,11 +286,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
   const isDarkTheme = (settings as any).theme !== 'light';
 
   const switchTrackColor = {
-    false: isDarkTheme ? '#3A3A3A' : '#E0E0E0',
-    true: '#6200EE',
+    false: isDarkTheme ? '#2A3138' : '#DCE4EC',
+    true: isDarkTheme ? '#8BCFBE' : '#B6E2D3',
   };
-  const switchThumbColorOn = isDarkTheme ? '#B0B0B0' : '#FFFFFF';
-  const switchThumbColorOff = isDarkTheme ? '#757575' : '#FFFFFF';
+  const switchThumbColorOn = isDarkTheme ? '#F1F3F5' : '#FFFFFF';
+  const switchThumbColorOff = isDarkTheme ? '#F1F3F5' : '#FFFFFF';
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -654,53 +654,53 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
               A senha mestra será usada para proteger e acessar seus dados sensíveis, backups e exportações.
             </Text>
 
-            <Text style={{ marginTop: 12, marginBottom: 4, color: '#333', fontWeight: '500' }}>Senha Mestra Atual (opcional)</Text>
+            <Text style={{ marginTop: 12, marginBottom: 4, color: colors.text, fontWeight: '500' }}>Senha Mestra Atual (opcional)</Text>
             <TextInput
               value={currentMasterPassword}
               onChangeText={setCurrentMasterPassword}
               placeholder="Digite a senha mestra atual (se já tiver uma)"
               secureTextEntry
               style={{
-                backgroundColor: '#fff',
+                backgroundColor: colors.card,
                 borderRadius: 8,
                 paddingHorizontal: 12,
                 paddingVertical: 12,
                 borderWidth: 1,
-                borderColor: '#e0e0e0',
+                borderColor: colors.border,
                 marginBottom: 12
               }}
             />
 
-            <Text style={{ marginBottom: 4, color: '#333', fontWeight: '500' }}>Nova Senha Mestra</Text>
+            <Text style={{ marginBottom: 4, color: colors.text, fontWeight: '500' }}>Nova Senha Mestra</Text>
             <TextInput
               value={newMasterPassword}
               onChangeText={setNewMasterPassword}
               placeholder="Digite a nova senha mestra"
               secureTextEntry
               style={{
-                backgroundColor: '#fff',
+                backgroundColor: colors.card,
                 borderRadius: 8,
                 paddingHorizontal: 12,
                 paddingVertical: 12,
                 borderWidth: 1,
-                borderColor: '#e0e0e0',
+                borderColor: colors.border,
                 marginBottom: 12
               }}
             />
 
-            <Text style={{ marginBottom: 4, color: '#333', fontWeight: '500' }}>Confirmar Nova Senha Mestra</Text>
+            <Text style={{ marginBottom: 4, color: colors.text, fontWeight: '500' }}>Confirmar Nova Senha Mestra</Text>
             <TextInput
               value={confirmMasterPassword}
               onChangeText={setConfirmMasterPassword}
               placeholder="Confirme a nova senha mestra"
               secureTextEntry
               style={{
-                backgroundColor: '#fff',
+                backgroundColor: colors.card,
                 borderRadius: 8,
                 paddingHorizontal: 12,
                 paddingVertical: 12,
                 borderWidth: 1,
-                borderColor: '#e0e0e0',
+                borderColor: colors.border,
                 marginBottom: 20
               }}
             />
@@ -734,22 +734,22 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout, onNavigateToH
           </View>
 
           <View style={styles.modalContent}>
-            <Text style={{ fontSize: 16, color: '#333', marginBottom: 12 }}>
+            <Text style={{ fontSize: 16, color: colors.text, marginBottom: 12 }}>
               Informe sua senha mestra para gerar o JSON com suas credenciais e notas.
             </Text>
-            <Text style={{ color: '#666', marginBottom: 8 }}>Senha Mestra</Text>
+            <Text style={{ color: colors.mutedText, marginBottom: 8 }}>Senha Mestra</Text>
             <TextInput
               value={exportPassword}
               onChangeText={setExportPassword}
               placeholder="Digite sua senha mestra"
               secureTextEntry
               style={{
-                backgroundColor: '#fff',
+                backgroundColor: colors.card,
                 borderRadius: 8,
                 paddingHorizontal: 12,
                 paddingVertical: 12,
                 borderWidth: 1,
-                borderColor: '#e0e0e0',
+                borderColor: colors.border,
                 marginBottom: 16
               }}
             />

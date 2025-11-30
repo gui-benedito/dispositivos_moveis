@@ -49,7 +49,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   requirePasswordOnLock: true,
   lockOnBackground: true,
   lockOnScreenOff: true,
-  theme: 'dark',
+  theme: 'light',
   createdAt: '',
   updatedAt: ''
 };
