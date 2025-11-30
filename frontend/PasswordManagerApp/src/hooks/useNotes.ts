@@ -108,6 +108,11 @@ export const useNotes = (): UseNotesReturn => {
       const queue: PendingNoteOperation[] = JSON.parse(raw);
       if (!Array.isArray(queue) || queue.length === 0) return;
 
+      // Limpar a fila imediatamente para evitar que múltiplas chamadas concorrentes
+      // processem as mesmas operações ao mesmo tempo. Em caso de erro de rede,
+      // as operações pendentes serão regravadas abaixo em `remaining`.
+      await AsyncStorage.removeItem(NOTES_QUEUE_KEY);
+
       const remaining: PendingNoteOperation[] = [];
 
       for (let i = 0; i < queue.length; i++) {
@@ -133,8 +138,6 @@ export const useNotes = (): UseNotesReturn => {
           }
         }
       }
-
-      await AsyncStorage.removeItem(NOTES_QUEUE_KEY);
     } catch (e) {
       console.error('Erro geral ao sincronizar operações offline de notas:', e);
     }

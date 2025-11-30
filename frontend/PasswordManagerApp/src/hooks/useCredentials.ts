@@ -117,6 +117,11 @@ export const useCredentials = () => {
         return;
       }
 
+      // Limpar a fila imediatamente para evitar que múltiplas chamadas concorrentes
+      // processem as mesmas operações ao mesmo tempo. Em caso de erro de rede,
+      // as operações pendentes serão regravadas abaixo em `remaining`.
+      await AsyncStorage.removeItem('credentialOpsQueue');
+
       const remaining: PendingOperation[] = [];
 
       for (let i = 0; i < queue.length; i++) {
@@ -140,8 +145,6 @@ export const useCredentials = () => {
           }
         }
       }
-
-      await AsyncStorage.removeItem('credentialOpsQueue');
     } catch (e) {
       console.error('Erro geral ao sincronizar operações offline de credenciais:', e);
     }
